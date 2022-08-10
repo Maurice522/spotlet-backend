@@ -10,7 +10,9 @@ const sgMail = require("@sendgrid/mail");
 sgMail.setApiKey(SENDGRID_API);
 const registerController = async (req, res) => {
   try {
-    const { fullName, mobile, email, password } = req.body;
+    const { firstName, lastName, mobile, email, password, job, booking_type } =
+      req.body;
+    const fullName = firstName + " " + lastName;
     const hashedPassword = await bcrypt.hash(password, 13);
     const data = {
       personalInfo: {
@@ -18,6 +20,8 @@ const registerController = async (req, res) => {
         mobile,
         email,
         password: hashedPassword,
+        job,
+        booking_type,
       },
       favourites: [],
       listedLocations: [],
@@ -42,8 +46,9 @@ const registerController = async (req, res) => {
 
 const activationController = async (req, res) => {
   try {
-    const { fullName, mobile, email, password } = req.body;
-    if (!fullName || !mobile || !email || !password)
+    const { firstName, lastName, mobile, email, password, job, booking_type } =
+      req.body;
+    if (!firstName || !mobile || !email || !password || !job || !booking_type)
       return res.status(422).json({ error: "please fill all fields" });
     //find user if already present
     const snapshot = await db
