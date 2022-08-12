@@ -22,6 +22,7 @@ const registerController = async (req, res) => {
         password: hashedPassword,
         job,
         booking_type,
+        profile_pic: "",
       },
       favourites: [],
       listedLocations: [],
@@ -60,7 +61,7 @@ const activationController = async (req, res) => {
     //otp
     let verification_code = "";
     const characters = "0123456789";
-    for (let i = 0; i < 6; i++)
+    for (let i = 0; i < 4; i++)
       verification_code +=
         characters[Math.floor(Math.random() * characters.length)];
     const emailData = {
@@ -114,6 +115,10 @@ const getUserDataController = async (req, res) => {
         fullName: user.data().personalInfo.fullName,
         email: user.data().personalInfo.email,
         mobile: user.data().personalInfo.mobile,
+        job: user.data().personalInfo.job,
+        booking_type: user.data().personalInfo.booking_type,
+        job: user.data().personalInfo.job,
+        profile_pic: user.data().personalInfo.profile_pic,
       },
       favourites: user.data().favourites,
       listedLocations: user.data().listedLocations,
@@ -125,9 +130,59 @@ const getUserDataController = async (req, res) => {
   }
 };
 
+const updateUserDataController = async (req, res) => {
+  try {
+    const { booking_type, email, fullName, job, mobile, profile_pic } =
+      req.body;
+
+    const snapshot = await db.collection("users").doc(req.params.id).get();
+    const user = snapshot.data();
+    console.log(user);
+
+    const updatedUser = {
+      ...user,
+      personalInfo: {
+        ...user.personalInfo,
+        booking_type,
+        email,
+        fullName,
+        job,
+        mobile,
+        profile_pic,
+      },
+    };
+    await db.collection("users").doc(req.params.id).update(updatedUser);
+    return res.status(200).json({ message: "user updated" });
+  } catch (error) {
+    res.status(422).send(error);
+  }
+};
+
+const resetPasswordController = async (req, res) => {
+  try {
+    const { currentPassword, newPassword, user_id } = req.body;
+    const snapshot = await db.collection("users").doc(user_id).get();
+    const user = snapshot.data();
+    if (currentPassword != user.personalInfo.password)
+      return res.send("Old Password is not correct!!");
+    await db
+      .collection("users")
+      .doc(req.params.id)
+      .update({
+        ...user,
+        personalInfo: { ...user.personalInfo, password: newPassword },
+      });
+    return res.status(200).json({ message: "password updated." });
+  } catch (error) {
+    res.status(422).send(error);
+  }
+};
+
 module.exports = {
   registerController,
   signInController,
   activationController,
   getUserDataController,
+  updateUserDataController,
+  resetPasswordController,
 };

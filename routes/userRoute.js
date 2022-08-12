@@ -5,6 +5,8 @@ const {
   signInController,
   activationController,
   getUserDataController,
+  updateUserDataController,
+  resetPasswordController,
 } = require("../controllers/user");
 //for registering users
 router.post("/signup", registerController);
@@ -17,5 +19,11 @@ router.post("/activation", activationController);
 
 //get User Data
 router.get("/user/:id", getUserDataController);
+
+//update user data
+router.put("/user/update/:id", updateUserDataController);
+
+//reset password
+router.put("/user/updatepassword", resetPasswordController);
 
 module.exports = router;
