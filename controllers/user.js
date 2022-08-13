@@ -8,6 +8,8 @@ const { JWT_SECRET, EMAIL_FROM, SENDGRID_API } = require("../config/dev");
 const sgMail = require("@sendgrid/mail");
 
 sgMail.setApiKey(SENDGRID_API);
+const storage = fireAdmin.storage();
+
 const registerController = async (req, res) => {
   try {
     const { firstName, lastName, mobile, email, password, job, booking_type } =
@@ -133,12 +135,12 @@ const getUserDataController = async (req, res) => {
 const updateUserDataController = async (req, res) => {
   try {
     const { booking_type, email, fullName, job, mobile, profile_pic } =
-      req.body;
+      req.body.updateData;
 
     const snapshot = await db.collection("users").doc(req.params.id).get();
     const user = snapshot.data();
-    console.log(user);
-
+    // console.log(user);
+    // storage.bucket('image').upload()
     const updatedUser = {
       ...user,
       personalInfo: {
@@ -151,6 +153,7 @@ const updateUserDataController = async (req, res) => {
         profile_pic,
       },
     };
+    console.log(req.body);
     await db.collection("users").doc(req.params.id).update(updatedUser);
     return res.status(200).json({ message: "user updated" });
   } catch (error) {
