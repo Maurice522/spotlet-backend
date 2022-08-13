@@ -10,6 +10,7 @@ fireAdmin.initializeApp({
 app.use(express.json());
 app.use(cors());
 app.use(require("./routes/userRoute"));
+app.use(require("./routes/locationRoute"));
 let db = fireAdmin.firestore();
 // app.post("/", async (req, res) => {
 //   const email = "sayamc@gmail.com";
