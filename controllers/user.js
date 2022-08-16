@@ -4,7 +4,12 @@ const fireAdmin = require("firebase-admin");
 const db = fireAdmin.firestore();
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
-const { JWT_SECRET, EMAIL_FROM, SENDGRID_API } = require("../config/dev");
+const {
+  JWT_SECRET,
+  EMAIL_FROM,
+  SENDGRID_API,
+  EMAIL,
+} = require("../config/dev");
 const sgMail = require("@sendgrid/mail");
 
 sgMail.setApiKey(SENDGRID_API);
@@ -161,19 +166,52 @@ const updateUserDataController = async (req, res) => {
   }
 };
 
+const forgotPasswordController = async (req, res) => {
+  try {
+    //find user
+    const { email } = req.body;
+    const snapshot = await db
+      .collection("users")
+      .where(`personalInfo.email`, "==", email)
+      .get();
+    if (snapshot.empty)
+      return res.status(422).json({ error: "User not exist with this email!" });
+    let user_id;
+    snapshot.forEach(async (doc) => {
+      user_id = doc.id;
+    });
+    sgMail.send({
+      to: email,
+      from: EMAIL_FROM,
+      subject: "Password Reset",
+      html: `  <p>You requested for password reset</p><br><br>
+      <h5>click in this <a href="${EMAIL}/reset/${user_id}">link</a> to reset password</h5>`,
+    });
+    res.json({ message: "check your email..." });
+  } catch (error) {
+    res.status(422).send(error);
+  }
+};
+
 const resetPasswordController = async (req, res) => {
   try {
-    const { currentPassword, newPassword, user_id } = req.body;
-    const snapshot = await db.collection("users").doc(user_id).get();
+    const { currentPassword, newPassword } = req.body;
+    console.log(req.body);
+    const snapshot = await db.collection("users").doc(req.params.id).get();
     const user = snapshot.data();
-    if (currentPassword != user.personalInfo.password)
-      return res.send("Old Password is not correct!!");
+    const doMatch = await bcrypt.compare(
+      currentPassword,
+      user.personalInfo.password
+    );
+    if (!doMatch)
+      return res.status(422).json({ error: "Old Password is not correct!!" });
+    const newHashedPassword = await bcrypt.hash(newPassword, 13);
     await db
       .collection("users")
       .doc(req.params.id)
       .update({
         ...user,
-        personalInfo: { ...user.personalInfo, password: newPassword },
+        personalInfo: { ...user.personalInfo, password: newHashedPassword },
       });
     return res.status(200).json({ message: "password updated." });
   } catch (error) {
@@ -188,4 +226,5 @@ module.exports = {
   getUserDataController,
   updateUserDataController,
   resetPasswordController,
+  forgotPasswordController,
 };
