@@ -11,6 +11,7 @@ app.use(express.json());
 app.use(cors());
 app.use(require("./routes/userRoute"));
 app.use(require("./routes/locationRoute"));
+app.use(require("./routes/requestsRoute"));
 let db = fireAdmin.firestore();
 // app.post("/", async (req, res) => {
 //   const email = "sayamc@gmail.com";
