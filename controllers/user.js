@@ -4,6 +4,7 @@ const fireAdmin = require("firebase-admin");
 const db = fireAdmin.firestore();
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
+const { v4: uuidv4 } = require("uuid");
 const {
   JWT_SECRET,
   EMAIL_FROM,
@@ -11,9 +12,10 @@ const {
   EMAIL,
 } = require("../config/dev");
 const sgMail = require("@sendgrid/mail");
+const { ref, uploadBytes, getDownloadURL } = require("firebase/storage");
+const storage = require("../firebase");
 
 sgMail.setApiKey(SENDGRID_API);
-const storage = fireAdmin.storage();
 
 const registerController = async (req, res) => {
   try {
@@ -140,10 +142,44 @@ const getUserDataController = async (req, res) => {
 const updateUserDataController = async (req, res) => {
   try {
     const { booking_type, email, fullName, job, mobile, profile_pic } =
-      req.body.updateData;
+      req.body;
 
     const snapshot = await db.collection("users").doc(req.params.id).get();
     const user = snapshot.data();
+
+    // await storageRef.upload(req.body., {
+    //   public: true,
+    //   destination: `/uploads/user-profiles/${user.personalInfo.email}`,
+    //   metadata: {
+    //     firebaseStorageDownloadTokens: uuidv4(),
+    //   },
+    // });
+
+    // const storageRef = ref(storage, "user-profiles");
+    // const storageRef = storage.bucket();
+    // storageRef.upload(req.body.preview);
+
+    // var getFileBlob = function (url, cb) {
+    //   var xhr = new XMLHttpRequest();
+    //   xhr.open("GET", url);
+    //   xhr.responseType = "blob";
+    //   xhr.addEventListener("load", function () {
+    //     cb(xhr.response);
+    //   });
+    //   //xhr.send();
+    // };
+
+    // getFileBlob(req.body.preview, (blob) => {
+    //   fireAdmin
+    //     .storage()
+    //     .ref()
+    //     .put(blob)
+    //     .then(function (snapshot) {
+    //       console.log("Uploaded a blob or file!");
+    //     });
+    //   console.log(blob);
+    // });
+
     // console.log(user);
     // storage.bucket('image').upload()
     const updatedUser = {
@@ -163,6 +199,19 @@ const updateUserDataController = async (req, res) => {
     return res.status(200).json({ message: "user updated" });
   } catch (error) {
     res.status(422).send(error);
+  }
+};
+
+const uploadPicController = async (req, res) => {
+  try {
+    const file = req.file;
+    const imageRef = ref(storage, file.originalname);
+    const metatype = { contentType: file.mimetype, name: file.originalname };
+    const snapshot = await uploadBytes(imageRef, file.buffer, metatype);
+    const url = await getDownloadURL(imageRef);
+    return res.status(200).json({ message: "uploaded...", url: url });
+  } catch (error) {
+    return res.status(422).send(error);
   }
 };
 
@@ -195,8 +244,26 @@ const forgotPasswordController = async (req, res) => {
 
 const resetPasswordController = async (req, res) => {
   try {
+    const { newPassword } = req.body;
+    const snapshot = await db.collection("users").doc(req.params.id).get();
+    const user = snapshot.data();
+    const newHashedPassword = await bcrypt.hash(newPassword, 13);
+    await db
+      .collection("users")
+      .doc(req.params.id)
+      .update({
+        ...user,
+        personalInfo: { ...user.personalInfo, password: newHashedPassword },
+      });
+    return res.status(200).json({ message: "password changed..." });
+  } catch (error) {
+    res.status(422).send(error);
+  }
+};
+
+const updatePasswordController = async (req, res) => {
+  try {
     const { currentPassword, newPassword } = req.body;
-    console.log(req.body);
     const snapshot = await db.collection("users").doc(req.params.id).get();
     const user = snapshot.data();
     const doMatch = await bcrypt.compare(
@@ -225,6 +292,8 @@ module.exports = {
   activationController,
   getUserDataController,
   updateUserDataController,
-  resetPasswordController,
+  updatePasswordController,
   forgotPasswordController,
+  resetPasswordController,
+  uploadPicController,
 };
