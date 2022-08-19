@@ -14,6 +14,7 @@ const {
 } = require("../controllers/user");
 
 const memoStorage = multer.memoryStorage();
+
 const upload = multer({ memoStorage });
 
 //for registering users
