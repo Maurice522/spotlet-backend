@@ -10,7 +10,7 @@ const {
   EMAIL_FROM,
   SENDGRID_API,
   EMAIL,
-} = require("../config/dev");
+} = require("../config/key");
 const sgMail = require("@sendgrid/mail");
 const { ref, uploadBytes, getDownloadURL } = require("firebase/storage");
 const storage = require("../firebase");
