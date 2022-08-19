@@ -147,41 +147,6 @@ const updateUserDataController = async (req, res) => {
     const snapshot = await db.collection("users").doc(req.params.id).get();
     const user = snapshot.data();
 
-    // await storageRef.upload(req.body., {
-    //   public: true,
-    //   destination: `/uploads/user-profiles/${user.personalInfo.email}`,
-    //   metadata: {
-    //     firebaseStorageDownloadTokens: uuidv4(),
-    //   },
-    // });
-
-    // const storageRef = ref(storage, "user-profiles");
-    // const storageRef = storage.bucket();
-    // storageRef.upload(req.body.preview);
-
-    // var getFileBlob = function (url, cb) {
-    //   var xhr = new XMLHttpRequest();
-    //   xhr.open("GET", url);
-    //   xhr.responseType = "blob";
-    //   xhr.addEventListener("load", function () {
-    //     cb(xhr.response);
-    //   });
-    //   //xhr.send();
-    // };
-
-    // getFileBlob(req.body.preview, (blob) => {
-    //   fireAdmin
-    //     .storage()
-    //     .ref()
-    //     .put(blob)
-    //     .then(function (snapshot) {
-    //       console.log("Uploaded a blob or file!");
-    //     });
-    //   console.log(blob);
-    // });
-
-    // console.log(user);
-    // storage.bucket('image').upload()
     const updatedUser = {
       ...user,
       personalInfo: {
@@ -194,7 +159,6 @@ const updateUserDataController = async (req, res) => {
         profile_pic,
       },
     };
-    console.log(req.body);
     await db.collection("users").doc(req.params.id).update(updatedUser);
     return res.status(200).json({ message: "user updated" });
   } catch (error) {
