@@ -1,5 +1,5 @@
 module.exports = {
-  JWT_SECRET: process.env.JWT_SEC,
+  JWT_SECRET: process.env.JWT_SECRET,
   SENDGRID_API: process.env.SENDGRID_API,
   EMAIL_FROM: process.env.EMAIL_FROM,
   EMAIL: process.env.EMAIL,
