@@ -9,8 +9,10 @@ const deleterequests = async (req, res) => {
     console.log("del");
     const user = await db.collection("users").doc(req.params.id).get();
     const data = {
-      fullName: user.data().personalInfo.fullName,
-      email: user.data().personalInfo.email,
+      id:req.params.id,
+      CustomerName: user.data().personalInfo.fullName,
+      CustomerEmail: user.data().personalInfo.email,
+      CustomerImage:user.data().personalInfo.profile_pic
     };
     await db.collection("requests").doc(req.params.id).set(data);
     return res.send("Deactivation Request Sent");
