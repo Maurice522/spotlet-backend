@@ -1,15 +1,23 @@
 const express = require("express");
 const router = express.Router();
+const multer = require("multer");
 const {
   registerController,
   signInController,
   activationController,
   getUserDataController,
   updateUserDataController,
-  resetPasswordController,
   forgotPasswordController,
+  uploadPicController,
+  updatePasswordController,
+  resetPasswordController,
   getUsersController
 } = require("../controllers/user");
+
+const memoStorage = multer.memoryStorage();
+
+const upload = multer({ memoStorage });
+
 //for registering users
 router.post("/signup", registerController);
 
@@ -31,7 +39,12 @@ router.put("/user/update/:id", updateUserDataController);
 //forgot password
 router.post("/forgot-password", forgotPasswordController);
 
-//reset password
-router.put("/user/updatepassword/:id", resetPasswordController);
+//update password
+router.put("/user/updatepassword/:id", updatePasswordController);
 
+//reset password
+router.put("/user/reset-password/:id", resetPasswordController);
+
+//upload pic
+router.post("/user/upload-pic", upload.single("pic"), uploadPicController);
 module.exports = router;

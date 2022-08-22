@@ -33,5 +33,5 @@ const deleterequests = async (req, res) => {
 
 
 module.exports = {
-    deleterequests
+  deleterequests,
 };
