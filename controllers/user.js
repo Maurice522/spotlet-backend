@@ -118,7 +118,11 @@ const signInController = async (req, res) => {
 const getUsersController = async (req, res) => {
   try {
     const user = await db.collection("users").get();
-    return res.status(200).send(user.docs.map((doc) => doc.data()));
+    const oo=user.docs.map((doc) =>{
+      return {id:doc.id,
+      ...doc.data()}
+    })
+    res.status(200).send(oo);
   } catch (error) {
     res.status(422).send(error);
   }
