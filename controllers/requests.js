@@ -12,7 +12,8 @@ const deleterequests = async (req, res) => {
       id:req.params.id,
       CustomerName: user.data().personalInfo.fullName,
       CustomerEmail: user.data().personalInfo.email,
-      CustomerImage:user.data().personalInfo.profile_pic
+      CustomerImage:user.data().personalInfo.profile_pic,
+      Mobile:user.data().personalInfo.mobile
     };
     await db.collection("requests").doc(req.params.id).set(data);
     return res.send("Deactivation Request Sent");
