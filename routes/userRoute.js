@@ -11,7 +11,7 @@ const {
   uploadPicController,
   updatePasswordController,
   resetPasswordController,
-  getUsersController
+  getUsersController,
 } = require("../controllers/user");
 
 const memoStorage = multer.memoryStorage();
