@@ -19,8 +19,16 @@ sgMail.setApiKey(SENDGRID_API);
 
 const registerController = async (req, res) => {
   try {
-    const { firstName, lastName, mobile, email, password, job, booking_type } =
-      req.body;
+    const {
+      firstName,
+      lastName,
+      mobile,
+      email,
+      password,
+      company,
+      profession,
+      booking_type,
+    } = req.body;
     const fullName = firstName + " " + lastName;
     const hashedPassword = await bcrypt.hash(password, 13);
     const data = {
@@ -29,8 +37,9 @@ const registerController = async (req, res) => {
         mobile,
         email,
         password: hashedPassword,
-        job,
         booking_type,
+        [booking_type === "individual" ? "profession" : "company"]:
+          booking_type === "individual" ? profession : company,
         profile_pic: "",
       },
       favourites: [],
@@ -58,7 +67,7 @@ const activationController = async (req, res) => {
   try {
     const { firstName, lastName, mobile, email, password, job, booking_type } =
       req.body;
-    if (!firstName || !mobile || !email || !password || !job || !booking_type)
+    if (!firstName || !mobile || !email || !password || !booking_type)
       return res.status(422).json({ error: "please fill all fields" });
     //find user if already present
     const snapshot = await db
@@ -118,10 +127,9 @@ const signInController = async (req, res) => {
 const getUsersController = async (req, res) => {
   try {
     const user = await db.collection("users").get();
-    const oo=user.docs.map((doc) =>{
-      return {id:doc.id,
-      ...doc.data()}
-    })
+    const oo = user.docs.map((doc) => {
+      return { id: doc.id, ...doc.data() };
+    });
     res.status(200).send(oo);
   } catch (error) {
     res.status(422).send(error);
@@ -131,14 +139,17 @@ const getUsersController = async (req, res) => {
 const getUserDataController = async (req, res) => {
   try {
     const user = await db.collection("users").doc(req.params.id).get();
+    const type = user.data().personalInfo.booking_type;
     const userData = {
       personalInfo: {
         fullName: user.data().personalInfo.fullName,
         email: user.data().personalInfo.email,
         mobile: user.data().personalInfo.mobile,
-        job: user.data().personalInfo.job,
         booking_type: user.data().personalInfo.booking_type,
-        job: user.data().personalInfo.job,
+        [type === "individual" ? "profession" : "company"]:
+          type === "individual"
+            ? user.data().personalInfo.profession
+            : user.data().personalInfo.company,
         profile_pic: user.data().personalInfo.profile_pic,
       },
       favourites: user.data().favourites,
@@ -153,8 +164,15 @@ const getUserDataController = async (req, res) => {
 
 const updateUserDataController = async (req, res) => {
   try {
-    const { booking_type, email, fullName, job, mobile, profile_pic } =
-      req.body;
+    const {
+      booking_type,
+      email,
+      fullName,
+      company,
+      mobile,
+      profile_pic,
+      profession,
+    } = req.body;
 
     const snapshot = await db.collection("users").doc(req.params.id).get();
     const user = snapshot.data();
@@ -162,13 +180,14 @@ const updateUserDataController = async (req, res) => {
     const updatedUser = {
       ...user,
       personalInfo: {
-        ...user.personalInfo,
         booking_type,
         email,
+        password: user.personalInfo.password,
         fullName,
-        job,
         mobile,
         profile_pic,
+        [booking_type === "individual" ? "profession" : "company"]:
+          booking_type === "individual" ? profession : company,
       },
     };
     await db.collection("users").doc(req.params.id).update(updatedUser);

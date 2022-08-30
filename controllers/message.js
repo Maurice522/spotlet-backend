@@ -46,7 +46,6 @@ const getUserInboxController = async (req, res) => {
       .where("members", "array-contains", req.params.userId)
       .orderBy("timestamp", "desc")
       .get();
-    if (snapshot.empty) return res.send("No Users in inbox");
     const users = snapshot.docs.map((doc) => {
       return {
         id: doc.id,
