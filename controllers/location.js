@@ -2,7 +2,8 @@
 
 const fireAdmin = require("firebase-admin");
 const db = fireAdmin.firestore();
-
+const { ref, uploadBytes, getDownloadURL } = require("firebase/storage");
+const storage = require("../firebase");
 //Random generated Id
 const generateId = () => {
   let code = "";
@@ -104,8 +105,37 @@ const getAllLocations = async(req, res) => {
   }
 }
 
+const uploadLocPicsController = async (req, res) => {
+  try {
+    const file = req.file;
+    const imageRef = ref(storage, `locations/${file.originalname}`);
+    const metatype = { contentType: file.mimetype, name: file.originalname };
+    const snapshot = await uploadBytes(imageRef, file.buffer, metatype);
+    const url = await getDownloadURL(imageRef);
+    return res.status(200).json({ message: "uploaded...", url: url });
+  } catch (error) {
+    return res.status(422).send(error);
+  }
+};
+
+const uploadGSTDoc = async (req, res) => {
+  try {
+    const file = req.file;
+    const imageRef = ref(storage, `gst/${file.originalname}`);
+    const metatype = { contentType: file.mimetype, name: file.originalname };
+    const snapshot = await uploadBytes(imageRef, file.buffer, metatype);
+    const url = await getDownloadURL(imageRef);
+    return res.status(200).json({ message: "uploaded...", url: url });
+  } catch (error) {
+    return res.status(422).send(error);
+  }
+};
+
+
 module.exports = {
   locationCreate,
   getAllLocations,
   tempLocation,
+  uploadLocPicsController,
+  uploadGSTDoc
 };
