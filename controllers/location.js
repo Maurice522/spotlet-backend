@@ -95,11 +95,22 @@ const locationCreate = async (req, res) => {
 
 const getAllLocations = async(req, res) => {
   try {
-    const snapshots = await db.collection("location").get();
+    const snapshots = await db.collection("location").where("verified", "==", false).orderBy("timestamp", "desc").get();
     const locations = snapshots.docs.map(doc => {
       return { location_id : doc.id, ...doc.data()};
     })
     return res.json({locations});
+  } catch (error) {
+    return res.status(400).send(error);
+  }
+}
+
+const getLocation = async(req, res) => {
+  try {
+    const snapshot = await db.collection("location").doc(req.params.locId).get();
+    if(!snapshot.exists) return res.send("No location found...");
+    const location = snapshot.data();
+    return res.status(200).send(location);
   } catch (error) {
     return res.status(400).send(error);
   }
@@ -134,6 +145,7 @@ const uploadGSTDoc = async (req, res) => {
 
 module.exports = {
   locationCreate,
+  getLocation,
   getAllLocations,
   tempLocation,
   uploadLocPicsController,
