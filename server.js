@@ -13,6 +13,7 @@ app.use(require("./routes/userRoute"));
 app.use(require("./routes/locationRoute"));
 app.use(require("./routes/requestsRoute"));
 app.use(require("./routes/messageRoute"));
+app.use(require("./routes/bookingRoute"));
 let db = fireAdmin.firestore();
 
 const PORT = process.env.PORT || "8000";
