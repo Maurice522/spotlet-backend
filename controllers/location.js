@@ -1,5 +1,6 @@
 "use strict";
 
+const { async } = require("@firebase/util");
 const fireAdmin = require("firebase-admin");
 const db = fireAdmin.firestore();
 const { ref, uploadBytes, getDownloadURL } = require("firebase/storage");
@@ -148,8 +149,27 @@ const twilio = async (req, res) => {
   }
 }
 
+const getLocation = async (req, res) => {
+  try {
+    const location = await db.collection("location").doc(req.params.id).get();
+    res.status(200).send(location.data());
+  } catch (error) {
+    return res.status(422).send(error);
+  }
+}
+const delLocation = async (req, res) => {
+  try {
+    await db.collection("location").doc(req.params.id).delete();
+    res.status(200).send("Location Deleted");
+  } catch (error) {
+    return res.status(422).send(error);
+  }
+}
+
 
 module.exports = {
+  getLocation,
+  delLocation,
   locationCreate,
   getAllLocations,
   tempLocation,
