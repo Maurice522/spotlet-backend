@@ -73,7 +73,7 @@ const locationCreate = async (req, res) => {
           hourly_rate : individual.hourly_rate
         },
       },
-      verified : false
+      verified : "Under Review"
     };
     
     if (!user_id) return res.status(422).send("Invalid user");
@@ -82,7 +82,7 @@ const locationCreate = async (req, res) => {
     await db.collection("templocation").doc(location_id).delete()
     const snapshot = await db.collection("users").doc(user_id).get();
     const user = snapshot.data();
-    console.log(user);
+    //console.log(user);
     await db
       .collection("users")
       .doc(user_id)
@@ -95,7 +95,7 @@ const locationCreate = async (req, res) => {
 
 const getAllLocations = async(req, res) => {
   try {
-    const snapshots = await db.collection("location").where("verified", "==", false).orderBy("timestamp", "desc").get();
+    const snapshots = await db.collection("location").where("verified", "==", "Approved").orderBy("timestamp", "desc").get();
     const locations = snapshots.docs.map(doc => {
       return { location_id : doc.id, ...doc.data()};
     })
