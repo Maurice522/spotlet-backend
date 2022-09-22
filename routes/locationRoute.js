@@ -16,6 +16,8 @@ router.post("/createlocation", locationCreate);
 //Get All Locations
 router.get("/getlocations", getAllLocations);
 
+
+
 //Get a location
 router.get("/getlocation/:locId", getLocation);
 

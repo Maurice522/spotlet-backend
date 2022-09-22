@@ -21,7 +21,19 @@ const deleterequests = async (req, res) => {
     return res.status(400).send(error.message);
   }
 };
+const locationrequests = async (req, res) => {
+  try {
+    const snapshots = await db.collection("location").where("verified", "==", "Under Review").orderBy("timestamp", "desc").get();
+    const locations = snapshots.docs.map(doc => {
+      return { location_id : doc.id, ...doc.data()};
+    })
+    return res.json({locations});
+  } catch (error) {
+    return res.status(400).send(error);
+  }
+};
 
 module.exports = {
   deleterequests,
+  locationrequests
 };
