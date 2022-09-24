@@ -5,12 +5,12 @@ const db = fireAdmin.firestore();
 
 const createConversationController = async (req, res) => {
   try {
-    const { senderId, receiverId } = req.body;
-    const locationId = req.params.locationId;
+    const { senderId, receiverId, locationId } = req.body;
+    const bookingId = req.params.bookingId;
     const snapshot = await db
       .collection("conversations")
       .where("members", "array-contains", receiverId)
-      .where("locationId", "==", locationId)
+      .where("bookingId", "==", bookingId)
       .get();
     let present = false;
     snapshot.docs.map((doc) => {
@@ -26,6 +26,7 @@ const createConversationController = async (req, res) => {
     const data = {
       timestamp: new Date(),
       members: [senderId, receiverId],
+      bookingId,
       locationId,
       users: {
         [senderId]: senderUserProfile,

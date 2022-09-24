@@ -8,7 +8,7 @@ const {
 } = require("../controllers/message");
 
 //Select a user for chat making a room of two
-router.post("/conversation/:locationId", createConversationController);
+router.post("/createconversation/:bookingId", createConversationController);
 
 //get  users in inbox of a user
 router.get("/conversation/:userId", getUserInboxController);

@@ -2,7 +2,8 @@
 
 const fireAdmin = require("firebase-admin");
 const db = fireAdmin.firestore();
-const { ref, uploadBytes, getDownloadURL } = require("firebase/storage");
+const { ref, uploadBytes, getDownloadURL, deleteObject } = require("firebase/storage");
+const firebase = require("../firebase");
 const storage = require("../firebase");
 //Random generated Id
 const generateId = () => {
@@ -123,7 +124,7 @@ const uploadLocPicsController = async (req, res) => {
     const metatype = { contentType: file.mimetype, name: file.originalname };
     const snapshot = await uploadBytes(imageRef, file.buffer, metatype);
     const url = await getDownloadURL(imageRef);
-    return res.status(200).json({ message: "uploaded...", url: url });
+    return res.status(200).json({ message: "uploaded...", url: url,  fileRef : imageRef  });
   } catch (error) {
     return res.status(422).send(error);
   }
@@ -136,12 +137,26 @@ const uploadGSTDoc = async (req, res) => {
     const metatype = { contentType: file.mimetype, name: file.originalname };
     const snapshot = await uploadBytes(imageRef, file.buffer, metatype);
     const url = await getDownloadURL(imageRef);
-    return res.status(200).json({ message: "uploaded...", url: url });
+    return res.status(200).json({ message: "uploaded...", url: url, fileRef : imageRef });
   } catch (error) {
     return res.status(422).send(error);
   }
 };
 
+const deleteFile = async (req, res) => {
+  try {
+    const {image, fileRef} = req.body;
+    const delref = ref(storage, fileRef._location.path_)
+    const response = await deleteObject(delref);
+  //  console.log(response);
+    return res.status(200).send("deleted");
+  ///  deleteObject()
+
+    //console.log(req.body);
+  } catch (error) {
+    return res.status(422).send(error);
+  }
+}
 
 module.exports = {
   locationCreate,
@@ -149,5 +164,6 @@ module.exports = {
   getAllLocations,
   tempLocation,
   uploadLocPicsController,
-  uploadGSTDoc
+  uploadGSTDoc,
+  deleteFile
 };

@@ -1,14 +1,22 @@
 const express = require("express");
 const router = express.Router();
 const multer = require("multer");
-const { locationCreate, getAllLocations, tempLocation, uploadLocPicsController, uploadGSTDoc, getLocation } = require("../controllers/location");
+const {
+  locationCreate,
+  getAllLocations,
+  tempLocation,
+  uploadLocPicsController,
+  uploadGSTDoc,
+  getLocation,
+  deleteFile,
+} = require("../controllers/location");
 
 const memoStorage = multer.memoryStorage();
 
 const upload = multer({ memoStorage });
 
 //Create a Temporary Location
-router.post("/templocation", tempLocation)
+router.post("/templocation", tempLocation);
 
 //Creating a Location.
 router.post("/createlocation", locationCreate);
@@ -24,5 +32,8 @@ router.post("/uploadlocpic", upload.single("pic"), uploadLocPicsController);
 
 //upload GST documents
 router.post("/uploadgst", upload.single("pic"), uploadGSTDoc);
+
+//delet file from storage
+router.delete("/deletefile", deleteFile);
 
 module.exports = router;
