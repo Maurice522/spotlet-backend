@@ -10,8 +10,9 @@ const {
   getLocation,
   deleteFile,
   delLocation,
+  approveLocation,
+  incompList
 } = require("../controllers/location");
-
 const memoStorage = multer.memoryStorage();
 
 const upload = multer({ memoStorage });
@@ -19,8 +20,14 @@ const upload = multer({ memoStorage });
 //Create a Temporary Location
 router.post("/templocation", tempLocation);
 
+//Incomplete Listings
+router.get("/incomplist", incompList)
+
 //Creating a Location.
 router.post("/createlocation", locationCreate);
+
+//approve location
+router.put("/approveloc/:id",approveLocation);
 
 //Get All Locations
 router.get("/getlocations", getAllLocations);

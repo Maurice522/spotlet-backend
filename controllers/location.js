@@ -108,6 +108,28 @@ const getAllLocations = async (req, res) => {
   }
 }
 
+const approveLocation=async(req,res)=>{
+  try {
+    console.log(req.params.id);
+    await db.collection("location").doc(req.params.id).update({"verified": "Approved"});
+    return res.send("Location Approved");
+  } catch (error) {
+    return res.status(400).send(error);
+  }
+}
+const incompList=async(req,res)=>{
+  try {
+    const user = await db.collection("templocation").get();
+    const oo = user.docs.map((doc) => {
+      return { id: doc.id, ...doc.data() };
+    });
+    res.status(200).send(oo);
+    
+  } catch (error) {
+    return res.status(400).send(error);
+  }
+}
+
 const getLocation = async(req, res) => {
   try {
     const snapshot = await db.collection("location").doc(req.params.locId).get();
@@ -194,7 +216,6 @@ const deleteFile = async (req, res) => {
 }
 
 module.exports = {
-  getLocation,
   delLocation,
   locationCreate,
   getLocation,
@@ -203,5 +224,7 @@ module.exports = {
   uploadLocPicsController,
   uploadGSTDoc,
   deleteFile,
-  twilio
+  twilio,
+  approveLocation,
+  incompList
 };
