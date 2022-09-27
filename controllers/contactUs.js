@@ -31,6 +31,19 @@ const getContact = async (req, res) => {
 
     }
 }
+const getPhotoshoot = async (req, res) => {
+    try {
+        const user = await db.collection("photorequest").get();
+        const oo = user.docs.map((doc) => {
+            return { id: doc.id, ...doc.data() };
+        });
+        res.status(200).send(oo);
+
+    } catch (error) {
+        return res.status(400).send(error);
+
+    }
+}
 
 const photoshootRequest = async (req, res) => {
     try {
@@ -42,6 +55,7 @@ const photoshootRequest = async (req, res) => {
             address
         }
         await db.collection("photorequest").doc().set(data);
+        res.status(200).send("sent...");
     } catch (error) {
         return res.status(400).send(error);
     }
@@ -50,5 +64,5 @@ const photoshootRequest = async (req, res) => {
 module.exports = {
     sendQueriesToGorecce,
     photoshootRequest,
-    getContact
+    getContact,getPhotoshoot
 };
