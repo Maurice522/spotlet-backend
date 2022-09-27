@@ -2,13 +2,20 @@
 const {
     EMAIL_FROM,
     SENDGRID_API,
-    EMAIL,
+    TWILIO_ACCOUNT_SID,
+    TWILIO_AUTH_TOKEN
   } = require("../config/key");
 const fireAdmin = require("firebase-admin");
 const db = fireAdmin.firestore();
-const sgMail = require("@sendgrid/mail");
 
+const accountSid =TWILIO_ACCOUNT_SID;
+const authToken = TWILIO_AUTH_TOKEN;
+const client = require('twilio')(accountSid, authToken);
+
+//SendGrid Mail
+const sgMail = require("@sendgrid/mail");
 sgMail.setApiKey(SENDGRID_API);
+
 const locationBookController = async(req, res) => {
     try {
         const {event, date, time, duration_in_hours, attendies, activity, user_id, user_data, owner_id, property_id, total_amt} = req.body;
@@ -112,10 +119,30 @@ const updateBookingStatus = async(req, res) => {
             return res.status(400).send(error);
         }
     }
+
+    //Mobile OTP
+const mobileOtpVerify = (req, res) => {
+        const { phoneNum } = req.body;
+        console.log(phoneNum);
+        
+        client.messages.create(
+            {
+                body: 'Hi there', 
+                from: '+15618163070', 
+                to: phoneNum
+            }
+            )
+            .then(message => {
+                console.log(message.sid)
+                res.status(200).send("otp sent");
+            }).catch(err => res.status(422).send(err));
+            
+}
 module.exports = {
     locationBookController,
     bookingReq,
     getBookingDetail,
     updateBookingStatus,
-    deleteBookingReq
+    deleteBookingReq,
+    mobileOtpVerify
 }
