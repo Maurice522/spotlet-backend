@@ -67,26 +67,3 @@ io.on("connection", (socket) => {
     io.emit("getUsers", users);
   });
 });
-// bool checkPalindrome(string str){
-//   string rev = str;
-//   reverse(rev.begin(), rev.end());
-//   return rev == str;
-// }
-
-// void substr(string str, string asf, int &count){
-//   if(str.size <= 0){
-//       if(asf == "") return;
-//       checkPalindrome(asf) ? count++ : count;
-//       return;
-//   }
-//   substr(str, asf, count);
-//   substr(str.substr(1,str.size()), asf + str[0], count);
-// }
-
-// long long int  countPS(string str)
-// {
-//  int count = 0;
-// //   substr(str, "", count);
-//  return count;
-
-// }
