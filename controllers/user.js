@@ -121,7 +121,7 @@ const signInController = async (req, res) => {
       return res.send(token);
     } else return res.status(422).json({ error: "Invalid Email or Password!" });
   } catch (error) {
-    return res.status(422).json(error);
+    return res.send(error);
   }
 };
 const getUsersController = async (req, res) => {
