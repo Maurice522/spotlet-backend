@@ -1,7 +1,18 @@
 "use strict"
-
+const {
+    EMAIL_FROM,
+    SENDGRID_API,
+  } = require("../config/key");
 const fireAdmin = require("firebase-admin");
 const db = fireAdmin.firestore();
+
+// const accountSid =TWILIO_ACCOUNT_SID;
+// const authToken = TWILIO_AUTH_TOKEN;
+// const client = require('twilio')(accountSid, authToken);
+
+//SendGrid Mail
+const sgMail = require("@sendgrid/mail");
+sgMail.setApiKey(SENDGRID_API);
 
 const locationBookController = async(req, res) => {
     try {
@@ -52,7 +63,7 @@ const bookingReq = async(req, res) => {
 const getBookingDetail = async(req, res) => {
     try {
         const {locationId} = req.body
-        console.log(req.body);
+        //console.log(req.body);
         const snapshot = await db.collection("bookings").doc(locationId).collection("bookingrequests").doc(req.params.bookingId).get();
         const bookingDetail = snapshot.data();
         return res.status(200).send(bookingDetail);
@@ -69,19 +80,67 @@ const updateBookingStatus = async(req, res) => {
         await db.collection("bookings").doc(locationId).collection("bookingrequests").doc(bookingId).update({...bookingDetail, payment_status : status})
         const snapshot1 = await db.collection("users").doc(user_id).get();
         const user = snapshot1.data();
-        console.log(user);
+        //console.log(user);
         const updatePort = user.portfolio.map(p => p.bookingId === bookingId ? {...p, payment_status : status} : p);
-        console.log(updatePort);
+        //console.log(updatePort);
        await db.collection("users").doc(user_id).update({ ...user, portfolio: updatePort });
+       const link = "https://gorecce-5a416.web.app/bookingdetails/"+bookingId;
+       const emailData = {
+        from: EMAIL_FROM,
+        to: user.personalInfo.email,
+        subject: "Location Booking Status",
+        html: `
+        <h2>Location Id - ${locationId}</h2>
+        <h2>Booking Id - ${bookingId}</h2>
+        <p>Your status of booking a location is ${status}</p>
+        ${status === "Approved" ? `<p>Please use this link to complete your payment - <b>${link}</b> </p>` : ""}
+              <hr />`,
+      };
+      await sgMail.send(emailData);
         return res.status(200).send(`Booking is  ${status}`);
     } catch (error) {
         return res.status(400).send(error);
     }
 }
 
+    const deleteBookingReq = async(req, res) => {
+        try {
+            const {locationId, bookingId, user_id} = req.body;
+            //console.log(req.body);
+            await db.collection("bookings").doc(locationId).collection("bookingrequests").doc(bookingId).delete(); 
+            const snapshot1 = await db.collection("users").doc(user_id).get();
+            const user = snapshot1.data();
+            const updatePort = user.portfolio.filter(p => p.bookingId !== bookingId);
+            await db.collection("users").doc(user_id).update({...user, portfolio : updatePort});
+            return res.status(200).send("Booking Request Deleted...");
+        } catch (error) {
+            return res.status(400).send(error);
+        }
+    }
+
+//     //Mobile OTP
+// const mobileOtpVerify = (req, res) => {
+//         const { phoneNum } = req.body;
+//         console.log(phoneNum);
+        
+//         client.messages.create(
+//             {
+//                 body: 'Hi there', 
+//                 from: '+15618163070', 
+//                 to: phoneNum
+//             }
+//             )
+//             .then(message => {
+//                 console.log(message.sid)
+//                 res.status(200).send("otp sent");
+//             }).catch(err => res.status(422).send(err));
+            
+// }
 module.exports = {
     locationBookController,
     bookingReq,
     getBookingDetail,
-    updateBookingStatus
+    updateBookingStatus,
+    deleteBookingReq,
+    // mobileOtpVerify
 }

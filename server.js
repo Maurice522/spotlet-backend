@@ -14,9 +14,11 @@ app.use(require("./routes/locationRoute"));
 app.use(require("./routes/requestsRoute"));
 app.use(require("./routes/messageRoute"));
 app.use(require("./routes/bookingRoute"));
+app.use(require("./routes/contactUsRoute"));
+app.use(require("./routes/blogRoute"));
 let db = fireAdmin.firestore();
 
-const PORT = process.env.PORT || "8000";
+const PORT = process.env.PORT || "7000";
 
 var server = app.listen(PORT, () => {
   console.log("server is running on port ", PORT);
@@ -66,26 +68,3 @@ io.on("connection", (socket) => {
     io.emit("getUsers", users);
   });
 });
-// bool checkPalindrome(string str){
-//   string rev = str;
-//   reverse(rev.begin(), rev.end());
-//   return rev == str;
-// }
-
-// void substr(string str, string asf, int &count){
-//   if(str.size <= 0){
-//       if(asf == "") return;
-//       checkPalindrome(asf) ? count++ : count;
-//       return;
-//   }
-//   substr(str, asf, count);
-//   substr(str.substr(1,str.size()), asf + str[0], count);
-// }
-
-// long long int  countPS(string str)
-// {
-//  int count = 0;
-// //   substr(str, "", count);
-//  return count;
-
-// }
