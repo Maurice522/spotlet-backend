@@ -1,7 +1,6 @@
 {
   "name": "auth-server",
   "version": "1.0.0",
-  "description": "",
   "main": "server.js",
   "engines": {
     "node": "16.16.0",
@@ -27,5 +26,7 @@
     "nodemon": "^2.0.19",
     "socket.io": "^4.5.1",
     "uuid": "^8.3.2"
-  }
+  },
+  "devDependencies": {},
+  "description": ""
 }

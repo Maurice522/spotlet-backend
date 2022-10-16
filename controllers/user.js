@@ -118,10 +118,10 @@ const signInController = async (req, res) => {
     const doMatch = await bcrypt.compare(password, user.personalInfo.password);
     if (doMatch) {
       const token = jwt.sign({ _id: user_id }, JWT_SECRET, { expiresIn: "7d" });
-      return res.send(token);
+      return res.json({token:token});
     } else return res.status(422).json({ error: "Invalid Email or Password!" });
   } catch (error) {
-    return res.status(422).json(error);
+    return res.send(error);
   }
 };
 const getUsersController = async (req, res) => {

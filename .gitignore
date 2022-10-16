@@ -1,5 +1,3 @@
-dev.js
 node_modules/
 node_modules/.bin/gp12-pem
 .env*
-serviceKey.json
