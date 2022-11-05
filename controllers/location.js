@@ -76,7 +76,7 @@ const locationCreate = async (req, res) => {
           hourly_rate: individual.hourly_rate
         },
       },
-      verified : "Under Review"
+      verified: "Under Review"
     };
 
     if (!user_id) return res.status(422).send("Invalid user");
@@ -85,7 +85,7 @@ const locationCreate = async (req, res) => {
     await db.collection("templocation").doc(location_id).delete()
     const snapshot = await db.collection("users").doc(user_id).get();
     const user = snapshot.data();
-    //console.log(user);
+    // console.log(user);
     await db
       .collection("users")
       .doc(user_id)
@@ -108,32 +108,32 @@ const getAllLocations = async (req, res) => {
   }
 }
 
-const approveLocation=async(req,res)=>{
+const approveLocation = async (req, res) => {
   try {
     console.log(req.params.id);
-    await db.collection("location").doc(req.params.id).update({"verified": "Approved"});
+    await db.collection("location").doc(req.params.id).update({ "verified": "Approved" });
     return res.send("Location Approved");
   } catch (error) {
     return res.status(400).send(error);
   }
 }
-const incompList=async(req,res)=>{
+const incompList = async (req, res) => {
   try {
     const user = await db.collection("templocation").get();
     const oo = user.docs.map((doc) => {
       return { id: doc.id, ...doc.data() };
     });
     res.status(200).send(oo);
-    
+
   } catch (error) {
     return res.status(400).send(error);
   }
 }
 
-const getLocation = async(req, res) => {
+const getLocation = async (req, res) => {
   try {
     const snapshot = await db.collection("location").doc(req.params.locId).get();
-    if(!snapshot.exists) return res.send("No location found...");
+    if (!snapshot.exists) return res.send("No location found...");
     const location = snapshot.data();
     return res.status(200).send(location);
   } catch (error) {
@@ -148,7 +148,7 @@ const uploadLocPicsController = async (req, res) => {
     const metatype = { contentType: file.mimetype, name: file.originalname };
     const snapshot = await uploadBytes(imageRef, file.buffer, metatype);
     const url = await getDownloadURL(imageRef);
-    return res.status(200).json({ message: "uploaded...", url: url,  fileRef : imageRef  });
+    return res.status(200).json({ message: "uploaded...", url: url, fileRef: imageRef });
   } catch (error) {
     return res.status(422).send(error);
   }
@@ -161,7 +161,7 @@ const uploadGSTDoc = async (req, res) => {
     const metatype = { contentType: file.mimetype, name: file.originalname };
     const snapshot = await uploadBytes(imageRef, file.buffer, metatype);
     const url = await getDownloadURL(imageRef);
-    return res.status(200).json({ message: "uploaded...", url: url, fileRef : imageRef });
+    return res.status(200).json({ message: "uploaded...", url: url, fileRef: imageRef });
   } catch (error) {
     return res.status(422).send(error);
   }
@@ -202,14 +202,34 @@ const delLocation = async (req, res) => {
 
 const deleteFile = async (req, res) => {
   try {
-    const {image, fileRef} = req.body;
+    const { image, fileRef } = req.body;
     const delref = ref(storage, fileRef._location.path_)
     const response = await deleteObject(delref);
-  //  console.log(response);
+    //  console.log(response);
     return res.status(200).send("deleted");
-  ///  deleteObject()
+    ///  deleteObject()
 
     //console.log(req.body);
+  } catch (error) {
+    return res.status(422).send(error);
+  }
+}
+
+//update location details
+const updateLocationUtil = async (data) => {
+  try {
+    // console.log(data);
+    const { location_id, newLocData } = data;
+    await db.collection("location").doc(location_id).update(newLocData);
+  } catch (error) {
+    console.log(error);
+  } 
+}
+ 
+const updateLocationInfo = async (req, res) => {
+  try {
+    await updateLocationUtil(req.body);
+    return res.status(200).send("updated location")
   } catch (error) {
     return res.status(422).send(error);
   }
@@ -226,5 +246,6 @@ module.exports = {
   deleteFile,
   twilio,
   approveLocation,
-  incompList
+  incompList,
+  updateLocationInfo
 };

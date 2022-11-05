@@ -11,7 +11,8 @@ const {
   deleteFile,
   delLocation,
   approveLocation,
-  incompList
+  incompList,
+  updateLocationInfo
 } = require("../controllers/location");
 const memoStorage = multer.memoryStorage();
 
@@ -44,10 +45,13 @@ router.delete("/dellocation/:id", delLocation);
 //upload locations pic
 router.post("/uploadlocpic", upload.single("pic"), uploadLocPicsController);
 
-//upload GST documents
+//upload GST documents 
 router.post("/uploadgst", upload.single("pic"), uploadGSTDoc);
 
 //delet file from storage
 router.delete("/deletefile", deleteFile);
+
+//update created location data
+router.post("/updatelocation/", updateLocationInfo);
 
 module.exports = router;

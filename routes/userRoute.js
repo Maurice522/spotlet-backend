@@ -11,7 +11,8 @@ const {
   uploadPicController,
   updatePasswordController,
   resetPasswordController,
-  getUsersController,
+  getUsersController, 
+  updateUserInfo
 } = require("../controllers/user");
 
 const memoStorage = multer.memoryStorage();
@@ -33,7 +34,7 @@ router.get("/user/:id", getUserDataController);
 //get all users
 router.get("/users", getUsersController);
 
-//update user data
+//update user personal_info data
 router.put("/user/update/:id", updateUserDataController);
 
 //forgot password
@@ -47,4 +48,8 @@ router.put("/user/reset-password/:id", resetPasswordController);
 
 //upload pic
 router.post("/user/upload-pic", upload.single("pic"), uploadPicController);
+
+//update user data
+router.post("/updateuser", updateUserInfo);
+
 module.exports = router;

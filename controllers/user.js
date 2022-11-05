@@ -118,7 +118,7 @@ const signInController = async (req, res) => {
     const doMatch = await bcrypt.compare(password, user.personalInfo.password);
     if (doMatch) {
       const token = jwt.sign({ _id: user_id }, JWT_SECRET, { expiresIn: "7d" });
-      return res.json({token:token});
+      return res.json({ token: token });
     } else return res.status(422).json({ error: "Invalid Email or Password!" });
   } catch (error) {
     return res.send(error);
@@ -145,6 +145,7 @@ const getUserDataController = async (req, res) => {
         fullName: user.data().personalInfo.fullName,
         email: user.data().personalInfo.email,
         mobile: user.data().personalInfo.mobile,
+        password: user.data().personalInfo.password,
         booking_type: user.data().personalInfo.booking_type,
         [type === "individual" ? "profession" : "company"]:
           type === "individual"
@@ -162,6 +163,7 @@ const getUserDataController = async (req, res) => {
   }
 };
 
+//update user personal_info data
 const updateUserDataController = async (req, res) => {
   try {
     const {
@@ -281,6 +283,27 @@ const updatePasswordController = async (req, res) => {
   }
 };
 
+//update user's fav, listed location, personal info and portfolio
+const updateUserUtil = async (data) => {
+  try {
+    // console.log(data);
+    const { updatedUserData, user_id } = data;
+    await db.collection("users").doc(user_id).update(updatedUserData);
+  } catch (error) {
+    console.log(error);
+  }
+}
+
+const updateUserInfo = async (req, res) => {
+  try {
+    // console.log(req.body);
+    await updateUserUtil(req.body);
+    return res.status(200).send("updated user")
+  } catch (error) {
+    return res.status(422).send(error);
+  }
+}
+
 module.exports = {
   registerController,
   signInController,
@@ -292,4 +315,5 @@ module.exports = {
   getUsersController,
   resetPasswordController,
   uploadPicController,
+  updateUserInfo
 };
