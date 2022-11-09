@@ -163,6 +163,35 @@ const getUserDataController = async (req, res) => {
   }
 };
 
+//update user personal_info data activation
+const activationUpdateUserDataController = async (req, res) => {
+  try {
+    const { fullName, mobile, email, job, booking_type } =
+      req.body;
+    if (!fullName || !mobile || !email || !booking_type)
+      return res.status(422).json({ error: "please fill all fields" });
+   
+    //otp
+    let verification_code = "";
+    const characters = "0123456789";
+    for (let i = 0; i < 4; i++)
+      verification_code +=
+        characters[Math.floor(Math.random() * characters.length)];
+    const emailData = {
+      from: EMAIL_FROM,
+      to: email,
+      subject: "Account Update link",
+      html: ` <p style=text-align:center;>Please use the following code to update your account - </p>
+            <h2 style=text-align:center;>${verification_code}</h3>
+            <hr />`,
+    };
+    await sgMail.send(emailData);
+    return res.json({ otp: verification_code, message: " OTP Sent" });
+  } catch (error) {
+    return res.status(400).json(error);
+  }
+};
+
 //update user personal_info data
 const updateUserDataController = async (req, res) => {
   try {
@@ -175,7 +204,7 @@ const updateUserDataController = async (req, res) => {
       profile_pic,
       profession,
     } = req.body;
-
+    console.log(req.body);
     const snapshot = await db.collection("users").doc(req.params.id).get();
     const user = snapshot.data();
 
@@ -192,7 +221,9 @@ const updateUserDataController = async (req, res) => {
           booking_type === "individual" ? profession : company,
       },
     };
+    console.log("before");
     await db.collection("users").doc(req.params.id).update(updatedUser);
+    console.log("after");
     return res.status(200).json({ message: "user updated" });
   } catch (error) {
     res.status(422).send(error);
@@ -309,6 +340,7 @@ module.exports = {
   signInController,
   activationController,
   getUserDataController,
+  activationUpdateUserDataController,
   updateUserDataController,
   updatePasswordController,
   forgotPasswordController,

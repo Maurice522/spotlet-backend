@@ -12,7 +12,8 @@ const {
   delLocation,
   approveLocation,
   incompList,
-  updateLocationInfo
+  updateLocationInfo,
+  tempLocationGet
 } = require("../controllers/location");
 const memoStorage = multer.memoryStorage();
 
@@ -53,5 +54,8 @@ router.delete("/deletefile", deleteFile);
 
 //update created location data
 router.post("/updatelocation/", updateLocationInfo);
+
+//get temp data
+router.get("/templocation/:location_id", tempLocationGet);
 
 module.exports = router;

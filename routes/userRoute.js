@@ -6,6 +6,7 @@ const {
   signInController,
   activationController,
   getUserDataController,
+  activationUpdateUserDataController,
   updateUserDataController,
   forgotPasswordController,
   uploadPicController,
@@ -33,6 +34,9 @@ router.get("/user/:id", getUserDataController);
 
 //get all users
 router.get("/users", getUsersController);
+
+// for account updation
+router.post("/updateactivation", activationUpdateUserDataController);
 
 //update user personal_info data
 router.put("/user/update/:id", updateUserDataController);

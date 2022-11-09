@@ -42,6 +42,18 @@ const tempLocation = async (req, res) => {
   }
 }
 
+const tempLocationGet = async (req, res) => {
+  try {
+    //create a unique location Id
+    const { location_id } = req.body;
+    console.log(req.body);
+    const snapshot = await db.collection("templocation").doc(req.params.location_id).get();
+    const templocation = snapshot.data();
+    return res.status(200).send(templocation);
+  } catch (error) {
+    return res.status(400).send(error);
+  }
+}
 
 const locationCreate = async (req, res) => {
   try {
@@ -223,9 +235,9 @@ const updateLocationUtil = async (data) => {
     await db.collection("location").doc(location_id).update(newLocData);
   } catch (error) {
     console.log(error);
-  } 
+  }
 }
- 
+
 const updateLocationInfo = async (req, res) => {
   try {
     await updateLocationUtil(req.body);
@@ -247,5 +259,6 @@ module.exports = {
   twilio,
   approveLocation,
   incompList,
-  updateLocationInfo
+  updateLocationInfo,
+  tempLocationGet
 };
