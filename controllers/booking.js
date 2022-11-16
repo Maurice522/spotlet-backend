@@ -40,6 +40,23 @@ const locationBookController = async (req, res) => {
         const snapshot = await db.collection("users").doc(user_id).get();
         const user = snapshot.data();
         await db.collection("users").doc(user_id).update({ ...user, portfolio: [...user.portfolio, { ...locationBooking, bookingId }] });
+
+        var today = new Date();
+        var dd = String(today.getDate()).padStart(2, '0');
+        var mm = String(today.getMonth() + 1).padStart(2, '0'); //January is 0!
+        var yyyy = today.getFullYear();
+        today = dd + '/' + mm + '/' + yyyy;
+        const notification = {
+            content: `You got a booking request`,
+            link: `/location/${property_id}/bookingdetail/${bookingId}`,
+            date: `${today}`,
+            admin: false
+        }
+        // console.log(notification);
+        const snapshot2 = await db.collection("users").doc(owner_id).get();
+        const user2 = snapshot2.data();
+        await db.collection("users").doc(owner_id).update({ ...user2, notifications: [...user2.notifications, notification] });
+
         return res.status(200).json({ message: "Request sent" });
     } catch (error) {
         return res.status(400).send(error);
@@ -84,6 +101,23 @@ const updateBookingStatus = async (req, res) => {
         const updatePort = user.portfolio.map(p => p.bookingId === bookingId ? { ...p, payment_status: status } : p);
         //console.log(updatePort);
         await db.collection("users").doc(user_id).update({ ...user, portfolio: updatePort });
+
+        var today = new Date();
+        var dd = String(today.getDate()).padStart(2, '0');
+        var mm = String(today.getMonth() + 1).padStart(2, '0'); //January is 0!
+        var yyyy = today.getFullYear();
+        today = dd + '/' + mm + '/' + yyyy;
+        const notification = {
+            content: `Your booking ${bookingId} has been ${status}`,
+            link: `/bookingdetails/${bookingId}`,
+            date: `${today}`,
+            admin: false
+        }
+        console.log(notification);
+        const snapshot2 = await db.collection("users").doc(user_id).get();
+        const user2 = snapshot2.data();
+        await db.collection("users").doc(user_id).update({ ...user2, notifications: [...user2.notifications, notification] });
+
         const link = "https://gorecce-5a416.web.app/bookingdetails/" + bookingId;
         const emailData = {
             from: EMAIL_FROM,

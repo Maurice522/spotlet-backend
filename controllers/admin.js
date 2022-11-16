@@ -40,7 +40,7 @@ const getNoOfRequests = async (req, res) => {
     try {
         const locations = await db.collection("locations").get();
         console.log(locations.docs);
-        res.status(200).send({ "hello": "hello" });
+        res.status(200).send("Requests");
     } catch (error) {
         res.status(422).send(error);
     }
@@ -56,8 +56,22 @@ const getAllLocations = async (req, res) => {
     } catch (error) {
         return res.status(400).send(error);
     }
-} 
+}
 
+const sendMsgToAllUsers = async (req, res) => {
+    try {
+        const { userlist, form } = req.body;
+        console.log(form);
+        userlist.forEach(async (user) => {
+            const snapshot = await db.collection("users").doc(user.id).get();
+            const userData = snapshot.data();
+            await db.collection("users").doc(user.id).update({ ...userData, notifications: [...userData.notifications, form] });
+        });
+        res.status(200).send("Message Sent");
+    } catch (error) {
+        return res.status(400).send(error);
+    }
+}
 
 module.exports = {
     getNoOfUsers,
@@ -65,4 +79,5 @@ module.exports = {
     getNoOfBookings,
     getNoOfRequests,
     getAllLocations,
+    sendMsgToAllUsers
 };

@@ -29,19 +29,16 @@ router.get("/incomplist", incompList)
 router.post("/createlocation", locationCreate);
 
 //approve location
-router.put("/approveloc/:id",approveLocation);
+router.put("/approveloc/:id", approveLocation);
 
-//Get All Locations
+//Get All approved Locations
 router.get("/getlocations", getAllLocations);
-
 
 //Get a location
 router.get("/getlocation/:locId", getLocation);
 
-
 //Delete Location
 router.delete("/dellocation/:id", delLocation);
-
 
 //upload locations pic
 router.post("/uploadlocpic", upload.single("pic"), uploadLocPicsController);

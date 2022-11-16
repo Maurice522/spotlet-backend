@@ -4,7 +4,7 @@ const fireAdmin = require("firebase-admin");
 const db = fireAdmin.firestore();
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
-const { v4: uuidv4 } = require("uuid");
+
 const {
   JWT_SECRET,
   EMAIL_FROM,
@@ -45,6 +45,7 @@ const registerController = async (req, res) => {
       favourites: [],
       listedLocations: [],
       portfolio: [],
+      notifications:[]
     };
     await db.collection("users").doc().set(data);
 
@@ -156,6 +157,7 @@ const getUserDataController = async (req, res) => {
       favourites: user.data().favourites,
       listedLocations: user.data().listedLocations,
       portfolio: user.data().portfolio,
+      notifications:user.data().notifications,
     };
     return res.status(200).send(userData);
   } catch (error) {
@@ -170,7 +172,7 @@ const activationUpdateUserDataController = async (req, res) => {
       req.body;
     if (!fullName || !mobile || !email || !booking_type)
       return res.status(422).json({ error: "please fill all fields" });
-   
+
     //otp
     let verification_code = "";
     const characters = "0123456789";
@@ -221,9 +223,7 @@ const updateUserDataController = async (req, res) => {
           booking_type === "individual" ? profession : company,
       },
     };
-    console.log("before");
     await db.collection("users").doc(req.params.id).update(updatedUser);
-    console.log("after");
     return res.status(200).json({ message: "user updated" });
   } catch (error) {
     res.status(422).send(error);

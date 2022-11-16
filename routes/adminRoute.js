@@ -1,6 +1,5 @@
 const express = require("express");
-const { getNoOfUsers, getNoOfLoctaions, getNoOfBookings, getNoOfRequests, getAllLocations } = require("../controllers/admin");
-const { getLocation } = require("../controllers/location");
+const { getNoOfUsers, getNoOfLoctaions, getNoOfBookings, getNoOfRequests, getAllLocations, sendMsgToAllUsers } = require("../controllers/admin");
 const router = express.Router();
 
 //get no. of active users
@@ -17,5 +16,8 @@ router.get("/noofrequests", getNoOfRequests);
 
 //get all locations, approved and pending
 router.get("/listalllocatons", getAllLocations)
+
+//msg all users
+router.post("/announcement", sendMsgToAllUsers)
 
 module.exports = router;

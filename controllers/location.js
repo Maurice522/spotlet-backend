@@ -4,8 +4,9 @@ const { async } = require("@firebase/util");
 const fireAdmin = require("firebase-admin");
 const db = fireAdmin.firestore();
 const { ref, uploadBytes, getDownloadURL, deleteObject } = require("firebase/storage");
-const firebase = require("../firebase");
+const { EMAIL_FROM } = require("../config/dev");
 const storage = require("../firebase");
+const sgMail = require("@sendgrid/mail");
 
 //Random generated Id
 const generateId = () => {
@@ -102,6 +103,14 @@ const locationCreate = async (req, res) => {
       .collection("users")
       .doc(user_id)
       .update({ ...user, listedLocations: [...user.listedLocations, { ...data, location_id }] });
+    const emailData = {
+      from: EMAIL_FROM,
+      to: user.personalInfo.email,
+      subject: "Location Creation Request Sent",
+      html: `<p>Your location ${location_id}, request has been sent to the ADMIN</p>`,
+    };
+    await sgMail.send(emailData);
+
     return res.send("Location Created");
   } catch (error) {
     return res.status(400).send(error);
@@ -122,8 +131,31 @@ const getAllLocations = async (req, res) => {
 
 const approveLocation = async (req, res) => {
   try {
-    console.log(req.params.id);
+    const { userid } = req.body;
     await db.collection("location").doc(req.params.id).update({ "verified": "Approved" });
+    const snapshot = await db.collection("users").doc(userid).get();
+    const user = snapshot.data()
+    const listedloc = user.listedLocations;
+    for (let i = 0; i < listedloc.length; i++) {
+      if (req.params.id === listedloc[i].location_id) {
+        listedloc[i].verified = "Approved"
+      }
+    }
+    await db.collection("users").doc(userid).update({ ...user, listedLocations: listedloc });
+    var today = new Date();
+    var dd = String(today.getDate()).padStart(2, '0');
+    var mm = String(today.getMonth() + 1).padStart(2, '0'); //January is 0!
+    var yyyy = today.getFullYear();
+
+    today = dd + '/' + mm + '/' + yyyy;
+    const notification = {
+      content: `Your location ${req.params.id} has been approved`,
+      link: `/property/${req.params.id}`,
+      date: `${today}`,
+      admin: false
+    }
+    console.log(notification);
+    await db.collection("users").doc(userid).update({ ...user, notifications: [...user.notifications, notification] });
     return res.send("Location Approved");
   } catch (error) {
     return res.status(400).send(error);
