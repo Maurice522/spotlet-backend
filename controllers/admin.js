@@ -61,11 +61,12 @@ const getAllLocations = async (req, res) => {
 const sendMsgToAllUsers = async (req, res) => {
     try {
         const { userlist, form } = req.body;
-        console.log(form);
+        // console.log(form);
         userlist.forEach(async (user) => {
             const snapshot = await db.collection("users").doc(user.id).get();
             const userData = snapshot.data();
-            await db.collection("users").doc(user.id).update({ ...userData, notifications: [...userData.notifications, form] });
+            // console.log(userData);
+            await db.collection("users").doc(user.id).update({ ...userData, notifications: [...userData.notifications, form], notificationFlag: true });
         });
         res.status(200).send("Message Sent");
     } catch (error) {

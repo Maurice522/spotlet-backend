@@ -155,7 +155,7 @@ const approveLocation = async (req, res) => {
       admin: false
     }
     console.log(notification);
-    await db.collection("users").doc(userid).update({ ...user, notifications: [...user.notifications, notification] });
+    await db.collection("users").doc(userid).update({ ...user, notifications: [...user.notifications, notification], notificationFlag: true });
     return res.send("Location Approved");
   } catch (error) {
     return res.status(400).send(error);

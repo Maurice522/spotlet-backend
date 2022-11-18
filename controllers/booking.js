@@ -55,7 +55,7 @@ const locationBookController = async (req, res) => {
         // console.log(notification);
         const snapshot2 = await db.collection("users").doc(owner_id).get();
         const user2 = snapshot2.data();
-        await db.collection("users").doc(owner_id).update({ ...user2, notifications: [...user2.notifications, notification] });
+        await db.collection("users").doc(owner_id).update({ ...user2, notifications: [...user2.notifications, notification], notificationFlag: true });
 
         return res.status(200).json({ message: "Request sent" });
     } catch (error) {
@@ -116,7 +116,7 @@ const updateBookingStatus = async (req, res) => {
         console.log(notification);
         const snapshot2 = await db.collection("users").doc(user_id).get();
         const user2 = snapshot2.data();
-        await db.collection("users").doc(user_id).update({ ...user2, notifications: [...user2.notifications, notification] });
+        await db.collection("users").doc(user_id).update({ ...user2, notifications: [...user2.notifications, notification], notificationFlag: true });
 
         const link = "https://gorecce-5a416.web.app/bookingdetails/" + bookingId;
         const emailData = {

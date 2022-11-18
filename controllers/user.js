@@ -45,7 +45,8 @@ const registerController = async (req, res) => {
       favourites: [],
       listedLocations: [],
       portfolio: [],
-      notifications:[]
+      notifications: [],
+      notificationFlag: false,
     };
     await db.collection("users").doc().set(data);
 
@@ -157,7 +158,8 @@ const getUserDataController = async (req, res) => {
       favourites: user.data().favourites,
       listedLocations: user.data().listedLocations,
       portfolio: user.data().portfolio,
-      notifications:user.data().notifications,
+      notifications: user.data().notifications,
+      notificationFlag: user.data().notificationFlag,
     };
     return res.status(200).send(userData);
   } catch (error) {
