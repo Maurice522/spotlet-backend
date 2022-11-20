@@ -47,12 +47,12 @@ const getPhotoshoot = async (req, res) => {
 
 const photoshootRequest = async (req, res) => {
     try {
-        const { fullName, email, mobile, address } = req.body;
+        const { fullName, email, mobile, message } = req.body;
         const data = {
             fullName,
             email,
             mobile,
-            address
+            address: message
         }
         await db.collection("photorequest").doc().set(data);
         res.status(200).send("sent...");
@@ -64,5 +64,5 @@ const photoshootRequest = async (req, res) => {
 module.exports = {
     sendQueriesToGorecce,
     photoshootRequest,
-    getContact,getPhotoshoot
+    getContact, getPhotoshoot
 };
