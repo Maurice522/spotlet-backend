@@ -21,7 +21,8 @@ const generateId = () => {
 const tempLocation = async (req, res) => {
   try {
     //create a unique location Id
-    const { location_id, data, name } = req.body;
+    const { location_id, data } = req.body;
+    const name = data.property_desc.property_name;
     if (!location_id) {
       const preName = name.replace(/\s/g, '').toLowerCase();
       let locationId = preName.substr(0, 4) + generateId();
@@ -265,6 +266,17 @@ const updateLocationUtil = async (data) => {
     // console.log(data);
     const { location_id, newLocData } = data;
     await db.collection("location").doc(location_id).update(newLocData);
+    const user_id = newLocData.property_desc.user_id;
+    const snapshot = await db.collection("users").doc(user_id).get();
+    const user = snapshot.data();
+    const listedloc = user.listedLocations;
+    for (let i = 0; i < listedloc.length; i++) {
+      if (location_id === listedloc[i].location_id) {
+        listedloc[i] = newLocData
+      }
+    }
+    console.log(listedloc);
+    await db.collection("users").doc(user_id).update({ ...user, listedLocations: listedloc });
   } catch (error) {
     console.log(error);
   }
@@ -273,7 +285,7 @@ const updateLocationUtil = async (data) => {
 const updateLocationInfo = async (req, res) => {
   try {
     await updateLocationUtil(req.body);
-    return res.status(200).send("updated location")
+    return res.status(200).send("Location Updated")
   } catch (error) {
     return res.status(422).send(error);
   }
