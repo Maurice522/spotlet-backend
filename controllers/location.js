@@ -63,12 +63,13 @@ const locationCreate = async (req, res) => {
     const { location_id } = req.body;
     const { user_id } = property_desc;
 
-    const { film_webseries_ad, tv_series_other, corporate, individual } = pricing;
+    const { film_webseries_ad, tv_series_other, corporate, individual, cleaningFee } = pricing;
 
     const data = {
       timestamp: new Date(),
       ...req.body.data,
       pricing: {
+        cleaningFee: cleaningFee,
         film_webseries_ad: {
           type: "Film",
           isPresent: film_webseries_ad.isPresent,
