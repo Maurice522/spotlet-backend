@@ -16,7 +16,7 @@ sgMail.setApiKey(SENDGRID_API);
 
 const locationBookController = async (req, res) => {
     try {
-        const { event, date, time, duration_in_hours, attendies, activity, user_id, user_data, owner_id, property_id, total_amt } = req.body;
+        const { discount, processfee, final_amount, event, date, time, duration_in_hours, attendies, activity, user_id, user_data, owner_id, property_id, total_amt } = req.body;
         //console.log(req.body);
         const locationBooking = {
             timestamp: new Date(),
@@ -29,6 +29,9 @@ const locationBookController = async (req, res) => {
             user_id,
             user_data,
             owner_id,
+            discount,
+            processfee,
+            final_amount,
             property_id,
             total_amt,
             payment_status: "Under Review",

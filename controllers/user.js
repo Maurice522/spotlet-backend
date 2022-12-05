@@ -264,7 +264,7 @@ const forgotPasswordController = async (req, res) => {
       from: EMAIL_FROM,
       subject: "Password Reset",
       html: `  <p>You requested for password reset</p><br><br>
-      <h5>click in this <a href="${EMAIL}/reset/${user_id}">link</a> to reset password</h5>`,
+      <h5>click in this <a href="https://gorecce-5a416.web.app/reset/${user_id}">link</a> to reset password</h5>`,
     });
     res.json({ message: "check your email..." });
   } catch (error) {
