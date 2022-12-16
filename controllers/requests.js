@@ -1,7 +1,7 @@
 "use strict";
 const fireAdmin = require("firebase-admin");
 const db = fireAdmin.firestore();
-const { EMAIL_FROM, SENDGRID_API, EMAIL } = require("../config/key");
+const { EMAIL_FROM, SIB_API, EMAIL } = require("../config/key");
 const sgMail = require("@sendgrid/mail");
 
 

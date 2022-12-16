@@ -25,7 +25,7 @@ const getNoOfBookings = async (req, res) => {
     try {
         await db.collection("bookings").get()
             .then((bookings) => {
-                console.log(bookings.docs);
+                // console.log(bookings.docs);
                 bookings.docs.map((booking) => {
                 })
             })
@@ -39,7 +39,7 @@ const getNoOfBookings = async (req, res) => {
 const getNoOfRequests = async (req, res) => {
     try {
         const locations = await db.collection("locations").get();
-        console.log(locations.docs);
+        // console.log(locations.docs);
         res.status(200).send("Requests");
     } catch (error) {
         res.status(422).send(error);

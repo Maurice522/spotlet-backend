@@ -8,14 +8,24 @@ const bcrypt = require("bcryptjs");
 const {
   JWT_SECRET,
   EMAIL_FROM,
-  SENDGRID_API,
-  EMAIL,
+  SIB_API,
 } = require("../config/key");
-const sgMail = require("@sendgrid/mail");
+const Sib = require('sib-api-v3-sdk');
 const { ref, uploadBytes, getDownloadURL } = require("firebase/storage");
 const storage = require("../firebase");
 
-sgMail.setApiKey(SENDGRID_API);
+const client = Sib.ApiClient.instance
+
+const apiKey = client.authentications['api-key']
+apiKey.apiKey = SIB_API
+
+const tranEmailApi = new Sib.TransactionalEmailsApi();
+const sender = {
+  email: EMAIL_FROM,
+  name: "Spotlet"
+}
+
+// sgMail.setApiKey(SIB_API);
 
 const registerController = async (req, res) => {
   try {
@@ -47,6 +57,7 @@ const registerController = async (req, res) => {
       portfolio: [],
       notifications: [],
       notificationFlag: false,
+      timestamp: new Date(),
     };
     await db.collection("users").doc().set(data);
 
@@ -59,6 +70,24 @@ const registerController = async (req, res) => {
       user_id = doc.id;
     });
     const token = jwt.sign({ _id: user_id }, JWT_SECRET, { expiresIn: "7d" });
+
+    const receivers = [{ email: email },]
+    const emailData = {
+      sender,
+      to: receivers,
+      subject: "Welcome to Spotlet",
+      htmlContent: ` <p style=text-align:center;>SpotLet connects people through unique spaces. 
+      State-of-the-art online platform enables guests to look for specific locations, 
+      communicate with their hosts, and make payments quickly, all in a single place. 
+      They aspire to create a community wherein you can always meet, create and 
+      celebrate with like-minded people through our online marketplace. 
+      So book the best spaces for any activity and enjoy a rewarding experience. 
+      We aspire to provide guests with a simplified booking platform and 
+      give property owners in India a channel to showcase their spaces and earn additional income. </p>`,
+    };
+
+    await tranEmailApi.sendTransacEmail(emailData);
+
     return res.send(token);
   } catch (error) {
     return res.status(400).send(error.message);
@@ -84,18 +113,22 @@ const activationController = async (req, res) => {
     for (let i = 0; i < 4; i++)
       verification_code +=
         characters[Math.floor(Math.random() * characters.length)];
+
+    const receivers = [{ email: email },]
     const emailData = {
-      from: EMAIL_FROM,
-      to: email,
+      sender,
+      to: receivers,
       subject: "Account activation link",
-      html: ` <p style=text-align:center;>Please use the following code to activate your account - </p>
+      htmlContent: ` <p style=text-align:center;>Please use the following code to activate your account - </p>
             <h2 style=text-align:center;>${verification_code}</h3>
             <hr />`,
     };
-    await sgMail.send(emailData);
-    return res.json({ otp: verification_code, message: " OTP Sent" });
+
+    await tranEmailApi.sendTransacEmail(emailData);
+
+    return res.status(200).json({ otp: verification_code, message: " OTP Sent" });
   } catch (error) {
-    return res.status(400).json(error);
+    return res.json(error);
   }
 };
 
@@ -181,15 +214,19 @@ const activationUpdateUserDataController = async (req, res) => {
     for (let i = 0; i < 4; i++)
       verification_code +=
         characters[Math.floor(Math.random() * characters.length)];
+
+    const receivers = [{ email: email },]
     const emailData = {
-      from: EMAIL_FROM,
-      to: email,
+      sender,
+      to: receivers,
       subject: "Account Update link",
-      html: ` <p style=text-align:center;>Please use the following code to update your account - </p>
+      htmlContent: ` <p style=text-align:center;>Please use the following code to update your account - </p>
             <h2 style=text-align:center;>${verification_code}</h3>
             <hr />`,
     };
-    await sgMail.send(emailData);
+
+    await tranEmailApi.sendTransacEmail(emailData);
+    
     return res.json({ otp: verification_code, message: " OTP Sent" });
   } catch (error) {
     return res.status(400).json(error);
@@ -208,7 +245,7 @@ const updateUserDataController = async (req, res) => {
       profile_pic,
       profession,
     } = req.body;
-    console.log(req.body);
+    // console.log(req.body);
     const snapshot = await db.collection("users").doc(req.params.id).get();
     const user = snapshot.data();
 

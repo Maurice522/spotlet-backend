@@ -1,12 +1,25 @@
 "use strict";
 
-const { async } = require("@firebase/util");
 const fireAdmin = require("firebase-admin");
 const db = fireAdmin.firestore();
 const { ref, uploadBytes, getDownloadURL, deleteObject } = require("firebase/storage");
-const { EMAIL_FROM } = require("../config/dev");
+const {
+  EMAIL_FROM,
+  SIB_API,
+} = require("../config/key");
 const storage = require("../firebase");
-const sgMail = require("@sendgrid/mail");
+const Sib = require('sib-api-v3-sdk');
+
+const client = Sib.ApiClient.instance
+
+const apiKey = client.authentications['api-key']
+apiKey.apiKey = SIB_API
+
+const tranEmailApi = new Sib.TransactionalEmailsApi();
+const sender = {
+  email: EMAIL_FROM,
+  name: "Spotlet"
+}
 
 //Random generated Id
 const generateId = () => {
@@ -105,13 +118,33 @@ const locationCreate = async (req, res) => {
       .collection("users")
       .doc(user_id)
       .update({ ...user, listedLocations: [...user.listedLocations, { ...data, location_id }] });
+
+    var today = new Date();
+    var dd = String(today.getDate()).padStart(2, '0');
+    var mm = String(today.getMonth() + 1).padStart(2, '0'); //January is 0!
+    var yyyy = today.getFullYear();
+
+    today = dd + '/' + mm + '/' + yyyy;
+    const notification = {
+      content: `Your location ${location_id} request has been sent`,
+      link: `#`,
+      date: `${today}`,
+      admin: false
+    }
+    // console.log(notification);
+    const snapshot2 = await db.collection("users").doc(user_id).get();
+    const user2 = snapshot2.data();
+    await db.collection("users").doc(user_id).update({ ...user2, notifications: [...user2.notifications, notification], notificationFlag: true });
+
+    const receivers = [{ email: user.personalInfo.email },]
     const emailData = {
-      from: EMAIL_FROM,
-      to: user.personalInfo.email,
+      sender,
+      to: receivers,
       subject: "Location Creation Request Sent",
-      html: `<p>Your location ${location_id}, request has been sent to the ADMIN</p>`,
+      htmlContent: `<p>Your location ${location_id}, request has been sent to the ADMIN</p>`,
     };
-    await sgMail.send(emailData);
+
+    await tranEmailApi.sendTransacEmail(emailData);
 
     return res.send("Location Created");
   } catch (error) {
@@ -143,7 +176,10 @@ const approveLocation = async (req, res) => {
         listedloc[i].verified = "Approved"
       }
     }
-    await db.collection("users").doc(userid).update({ ...user, listedLocations: listedloc });
+    await db.collection("users")
+      .doc(userid)
+      .update({ ...user, listedLocations: listedloc });
+
     var today = new Date();
     var dd = String(today.getDate()).padStart(2, '0');
     var mm = String(today.getMonth() + 1).padStart(2, '0'); //January is 0!
@@ -157,7 +193,19 @@ const approveLocation = async (req, res) => {
       admin: false
     }
     console.log(notification);
+
     await db.collection("users").doc(userid).update({ ...user, notifications: [...user.notifications, notification], notificationFlag: true });
+
+    const receivers = [{ email: user.personalInfo.email },]
+    const emailData = {
+      sender,
+      to: receivers,
+      subject: "Location Approved",
+      htmlContent: `<p>Your location ${req.params.id}, request has been approved by the ADMIN</p>`,
+    };
+
+    await tranEmailApi.sendTransacEmail(emailData);
+
     return res.send("Location Approved");
   } catch (error) {
     return res.status(400).send(error);
@@ -212,6 +260,7 @@ const uploadGSTDoc = async (req, res) => {
     return res.status(422).send(error);
   }
 };
+
 const twilio = async (req, res) => {
   try {
     const client = require("twilio")(accountSid, authToken);
@@ -276,7 +325,7 @@ const updateLocationUtil = async (data) => {
         listedloc[i] = newLocData
       }
     }
-    console.log(listedloc);
+    // console.log(listedloc);
     await db.collection("users").doc(user_id).update({ ...user, listedLocations: listedloc });
   } catch (error) {
     console.log(error);

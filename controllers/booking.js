@@ -1,25 +1,37 @@
 "use strict"
 const {
     EMAIL_FROM,
-    SENDGRID_API,
+    SIB_API,
 } = require("../config/key");
 const fireAdmin = require("firebase-admin");
 const db = fireAdmin.firestore();
+const Sib = require('sib-api-v3-sdk');
 
 // const accountSid =TWILIO_ACCOUNT_SID;
 // const authToken = TWILIO_AUTH_TOKEN;
 // const client = require('twilio')(accountSid, authToken);
 
-//SendGrid Mail
-const sgMail = require("@sendgrid/mail");
-sgMail.setApiKey(SENDGRID_API);
+//SendInBlue Mail
+const client = Sib.ApiClient.instance
+
+const apiKey = client.authentications['api-key']
+apiKey.apiKey = SIB_API
+
+const tranEmailApi = new Sib.TransactionalEmailsApi();
+const sender = {
+    email: EMAIL_FROM,
+    name: "Spotlet"
+}
+
+// sgMail.setApiKey(SIB_API);
 
 const locationBookController = async (req, res) => {
     try {
-        const { discount, processfee, final_amount, event, date, time, duration_in_hours, attendies, activity, user_id, user_data, owner_id, property_id, total_amt } = req.body;
-        //console.log(req.body);
+        const { discount, bookedDate, processfee, final_amount, event, date, time, duration_in_hours, attendies, activity, user_id, user_data, owner_id, property_id, total_amt } = req.body;
+        console.log(req.body);
         const locationBooking = {
             timestamp: new Date(),
+            bookedDate,
             event,
             date,
             time,
@@ -36,7 +48,7 @@ const locationBookController = async (req, res) => {
             total_amt,
             payment_status: "Under Review",
         }
-        //console.log(locationBooking);
+        console.log(locationBooking);
         const docRef = await db.collection("bookings").doc(property_id).collection("bookingrequests").add(locationBooking);
         const bookingId = docRef.id;
         // console.log(docRef.id);
@@ -95,6 +107,7 @@ const getBookingDetail = async (req, res) => {
 const updateBookingStatus = async (req, res) => {
     try {
         const { locationId, bookingId, user_id, status } = req.body;
+        console.log(user_id);
         const snapshot = await db.collection("bookings").doc(locationId).collection("bookingrequests").doc(bookingId).get();
         const bookingDetail = snapshot.data();
         await db.collection("bookings").doc(locationId).collection("bookingrequests").doc(bookingId).update({ ...bookingDetail, payment_status: status })
@@ -116,24 +129,27 @@ const updateBookingStatus = async (req, res) => {
             date: `${today}`,
             admin: false
         }
-        console.log(notification);
+        // console.log(notification);
         const snapshot2 = await db.collection("users").doc(user_id).get();
         const user2 = snapshot2.data();
         await db.collection("users").doc(user_id).update({ ...user2, notifications: [...user2.notifications, notification], notificationFlag: true });
 
         const link = "https://gorecce-5a416.web.app/bookingdetails/" + bookingId;
+
+        const receivers = [{ email: user.personalInfo.email },]
         const emailData = {
-            from: EMAIL_FROM,
-            to: user.personalInfo.email,
+            sender,
+            to: receivers,
             subject: "Location Booking Status",
-            html: `
-        <h2>Location Id - ${locationId}</h2>
-        <h2>Booking Id - ${bookingId}</h2>
-        <p>Your status of booking a location is ${status}</p>
-        ${status === "Approved" ? `<p>Please use this link to complete your payment - <b>${link}</b> </p>` : ""}
+            htmlContent: `
+            <h2>Location Id - ${locationId}</h2>
+            <h2>Booking Id - ${bookingId}</h2>
+            <p>Your status of booking a location is ${status}</p>
+            ${status === "Approved" ? `<p>Please use this link to complete your payment - <b>${link}</b> </p>` : ""}
               <hr />`,
         };
-        await sgMail.send(emailData);
+        await tranEmailApi.sendTransacEmail(emailData);
+
         return res.status(200).send(`Booking is  ${status}`);
     } catch (error) {
         return res.status(400).send(error);
@@ -172,11 +188,31 @@ const deleteBookingReq = async (req, res) => {
 //             }).catch(err => res.status(422).send(err));            
 // }
 
+const updateBooking = async (req, res) => {
+    try {
+        const { locationId, bookingId, user_id, date, time } = req.body;
+        const snapshot = await db.collection("bookings").doc(locationId).collection("bookingrequests").doc(bookingId).get();
+        const bookingDetail = snapshot.data();
+        await db.collection("bookings").doc(locationId).collection("bookingrequests").doc(bookingId).update({ ...bookingDetail, date, time })
+        const snapshot1 = await db.collection("users").doc(user_id).get();
+        const user = snapshot1.data();
+        //console.log(user);
+        const updatePort = user.portfolio.map(p => p.bookingId === bookingId ? { ...p, date, time } : p);
+        //console.log(updatePort);
+        await db.collection("users").doc(user_id).update({ ...user, portfolio: updatePort });
+
+        return res.status(200).send(`Booking has been Updated`);
+    } catch (error) {
+        return res.status(400).send(error);
+    }
+}
+
 module.exports = {
     locationBookController,
     bookingReq,
     getBookingDetail,
     updateBookingStatus,
     deleteBookingReq,
+    updateBooking
     // mobileOtpVerify,
 }

@@ -1,8 +1,8 @@
 module.exports = {
   JWT_SECRET: "sj2klsxbeddbsajdjsdbd",
-  SENDGRID_API:
-    "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",
-  EMAIL_FROM: "nipun.walia2018@gmail.com",
+  SIB_API:
+    "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",
+  EMAIL_FROM: "jaiprakash02082001@gmail.com",
   FIREBASE_API_KEY: "AIzaSyDW2-kYrd4E7aAgOKfiLtZreEVIN5Wehrs",
   FIREBASE_AUTH_DOMAIN: "gorecce-5a416.firebaseapp.com",
   FIREBASE_PROJECT_ID: "gorecce-5a416",

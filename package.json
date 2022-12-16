@@ -25,9 +25,9 @@
     "jwt-decode": "^3.1.2",
     "multer": "^1.4.5-lts.1",
     "nodemon": "^2.0.19",
+    "sib-api-v3-sdk": "^8.4.2",
     "socket.io": "^4.5.1",
     "uuid": "^8.3.2"
   },
-  "devDependencies": {},
   "description": ""
 }
