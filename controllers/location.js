@@ -61,7 +61,7 @@ const tempLocationGet = async (req, res) => {
   try {
     //create a unique location Id
     const { location_id } = req.body;
-    console.log(req.body);
+    // console.log(req.body);
     const snapshot = await db.collection("templocation").doc(req.params.location_id).get();
     const templocation = snapshot.data();
     return res.status(200).send(templocation);
@@ -192,7 +192,7 @@ const approveLocation = async (req, res) => {
       date: `${today}`,
       admin: false
     }
-    console.log(notification);
+    // console.log(notification);
 
     await db.collection("users").doc(userid).update({ ...user, notifications: [...user.notifications, notification], notificationFlag: true });
 

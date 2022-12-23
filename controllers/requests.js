@@ -42,9 +42,10 @@ const deleteReq = async (req, res) => {
 }
 const deleterequests = async (req, res) => {
   try {
-    console.log("del");
+    // console.log("del");
     const user = await db.collection("users").doc(req.params.id).get();
     const data = {
+      timestamp: new Date(),
       id:req.params.id,
       CustomerName: user.data().personalInfo.fullName,
       CustomerEmail: user.data().personalInfo.email,

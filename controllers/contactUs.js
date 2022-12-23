@@ -6,6 +6,7 @@ const sendQueriesToGorecce = async (req, res) => {
     try {
         const { fullName, email, mobile, message } = req.body;
         const data = {
+            timestamp: new Date(),
             fullName,
             email,
             mobile,
@@ -49,6 +50,7 @@ const photoshootRequest = async (req, res) => {
     try {
         const { fullName, email, mobile, message } = req.body;
         const data = {
+            timestamp: new Date(),
             fullName,
             email,
             mobile,

@@ -7,7 +7,16 @@ const storage = require("../firebase");
 const createBlog = async (req, res) => {
     try {
         const { title, image, subheading, date, content } = req.body;
-        const data = { title, image, subheading, date, content, likes: {}, comments: {} };
+        const data = {
+            timestamp: new Date(),
+            title,
+            image,
+            subheading,
+            date,
+            content,
+            likes: {},
+            comments: {}
+        };
         await db.collection("blogs").doc().set(data);
         return res.send("Blog is created");
     } catch (error) {

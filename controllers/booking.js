@@ -27,11 +27,11 @@ const sender = {
 
 const locationBookController = async (req, res) => {
     try {
-        const { discount, bookedDate, processfee, final_amount, event, date, time, duration_in_hours, attendies, activity, user_id, user_data, owner_id, property_id, total_amt } = req.body;
-        console.log(req.body);
+        const { discount, reqDate, processfee, final_amount, event, date, time, duration_in_hours, attendies, activity, user_id, user_data, owner_id, property_id, total_amt } = req.body;
+        // console.log(req.body);
         const locationBooking = {
             timestamp: new Date(),
-            bookedDate,
+            reqDate,
             event,
             date,
             time,
@@ -46,9 +46,10 @@ const locationBookController = async (req, res) => {
             final_amount,
             property_id,
             total_amt,
-            payment_status: "Under Review",
+            status: "Under Review",
+            payment_status: "Pending",
         }
-        console.log(locationBooking);
+        // console.log(locationBooking);
         const docRef = await db.collection("bookings").doc(property_id).collection("bookingrequests").add(locationBooking);
         const bookingId = docRef.id;
         // console.log(docRef.id);
@@ -107,14 +108,14 @@ const getBookingDetail = async (req, res) => {
 const updateBookingStatus = async (req, res) => {
     try {
         const { locationId, bookingId, user_id, status } = req.body;
-        console.log(user_id);
+        // console.log(status);
         const snapshot = await db.collection("bookings").doc(locationId).collection("bookingrequests").doc(bookingId).get();
         const bookingDetail = snapshot.data();
-        await db.collection("bookings").doc(locationId).collection("bookingrequests").doc(bookingId).update({ ...bookingDetail, payment_status: status })
+        await db.collection("bookings").doc(locationId).collection("bookingrequests").doc(bookingId).update({ ...bookingDetail, status: status })
         const snapshot1 = await db.collection("users").doc(user_id).get();
         const user = snapshot1.data();
         //console.log(user);
-        const updatePort = user.portfolio.map(p => p.bookingId === bookingId ? { ...p, payment_status: status } : p);
+        const updatePort = user.portfolio.map(p => p.bookingId === bookingId ? { ...p, status: status } : p);
         //console.log(updatePort);
         await db.collection("users").doc(user_id).update({ ...user, portfolio: updatePort });
 
@@ -149,7 +150,7 @@ const updateBookingStatus = async (req, res) => {
               <hr />`,
         };
         await tranEmailApi.sendTransacEmail(emailData);
-
+        console.log("done");
         return res.status(200).send(`Booking is  ${status}`);
     } catch (error) {
         return res.status(400).send(error);

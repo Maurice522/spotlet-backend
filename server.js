@@ -17,9 +17,11 @@ app.use(require("./routes/bookingRoute"));
 app.use(require("./routes/contactUsRoute"));
 app.use(require("./routes/blogRoute"));
 app.use(require("./routes/adminRoute"))
+app.use(require("./routes/dropdownRoute"))
+app.use(require("./routes/transactionRoute"))
 let db = fireAdmin.firestore();
 
-const PORT = process.env.PORT || "7000";
+const PORT = process.env.PORT || "8000";
 
 var server = app.listen(PORT, () => {
   console.log("server is running on port ", PORT);

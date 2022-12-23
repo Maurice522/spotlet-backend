@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const { locationBookController, bookingReq, getBookingDetail, updateBookingStatus, deleteBookingReq, updateBooking } = require("../controllers/booking");
+const { locationBookController, bookingReq, getBookingDetail, updateBookingStatus, deleteBookingReq, updateBooking, getAllBookings } = require("../controllers/booking");
 
 
 router.post("/bookingreq", locationBookController);

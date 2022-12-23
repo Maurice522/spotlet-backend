@@ -226,7 +226,7 @@ const activationUpdateUserDataController = async (req, res) => {
     };
 
     await tranEmailApi.sendTransacEmail(emailData);
-    
+
     return res.json({ otp: verification_code, message: " OTP Sent" });
   } catch (error) {
     return res.status(400).json(error);

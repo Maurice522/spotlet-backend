@@ -2,45 +2,56 @@ const fireAdmin = require("firebase-admin");
 const db = fireAdmin.firestore();
 
 const getNoOfUsers = async (req, res) => {
+    let count = 0;
     try {
-        const user = await db.collection("users").get();;
-        const size = user._size;
-        res.status(200).send({ size });
+        const snapshot = await db.collection("users").get();
+        snapshot.docs.map((doc) => {
+            count++;
+        });
+        res.status(200).send({ count });
     } catch (error) {
-        res.status(422).send(error);
+        res.status(400).send(error);
     }
 };
 
 const getNoOfLoctaions = async (req, res) => {
+    let count = 0;
     try {
-        const locations = await db.collection("location").get();;
-        const size = locations._size;
-        res.status(200).send({ size });
+        const snapshot = await db.collection("location").where("verified", "==", "Approved").get();;
+        snapshot.docs.map((doc) => {
+            count++;
+        });
+        res.status(200).send({ count });
     } catch (error) {
-        res.status(422).send(error);
+        res.status(400).send(error);
     }
 };
 
 const getNoOfBookings = async (req, res) => {
+    let count = 0;
     try {
-        await db.collection("bookings").get()
-            .then((bookings) => {
-                // console.log(bookings.docs);
-                bookings.docs.map((booking) => {
-                })
-            })
-            .catch((error) => console.log(error));
-        res.status(200).send(bookings.data());
+        // const snapshot = await db.collection("bookings").get();
+        // snapshot.docs.map(async (doc) => {
+        const requests = await db.collection("bookings").doc("spot35127").collection("bookingrequests").get();
+        requests.docs.map(doc => {
+            count++;
+        })
+        // });
+        // res.status(200).send(snapshot.docs);
+        res.status(200).send({ count });
     } catch (error) {
         res.status(422).send(error);
     }
 };
 
 const getNoOfRequests = async (req, res) => {
+    let count = 0;
     try {
-        const locations = await db.collection("locations").get();
-        // console.log(locations.docs);
-        res.status(200).send("Requests");
+        const snapshot = await db.collection("location").where("verified", "==", "Under Review").get();
+        snapshot.docs.map(doc => {
+            count++;
+        })
+        res.status(200).send({ count });
     } catch (error) {
         res.status(422).send(error);
     }
