@@ -62,22 +62,22 @@ const registerController = async (req, res) => {
 
     const createdUser = await newUser.save();
 
-    // const receivers = [{ email: req.body.email },]
-    // const emailData = {
-    //   sender,
-    //   to: receivers,
-    //   subject: "Welcome to Spotlet",
-    //   htmlContent: ` <p style=text-align:center;>SpotLet connects people through unique spaces. 
-    //   State-of-the-art online platform enables guests to look for specific locations, 
-    //   communicate with their hosts, and make payments quickly, all in a single place. 
-    //   They aspire to create a community wherein you can always meet, create and 
-    //   celebrate with like-minded people through our online marketplace. 
-    //   So book the best spaces for any activity and enjoy a rewarding experience. 
-    //   We aspire to provide guests with a simplified booking platform and 
-    //   give property owners in India a channel to showcase their spaces and earn additional income. </p>`,
-    // };
+    const receivers = [{ email: req.body.email },]
+    const emailData = {
+      sender,
+      to: receivers,
+      subject: "Welcome to Spotlet",
+      htmlContent: ` <p style=text-align:center;>SpotLet connects people through unique spaces. 
+      State-of-the-art online platform enables guests to look for specific locations, 
+      communicate with their hosts, and make payments quickly, all in a single place. 
+      They aspire to create a community wherein you can always meet, create and 
+      celebrate with like-minded people through our online marketplace. 
+      So book the best spaces for any activity and enjoy a rewarding experience. 
+      We aspire to provide guests with a simplified booking platform and 
+      give property owners in India a channel to showcase their spaces and earn additional income. </p>`,
+    };
 
-    // await tranEmailApi.sendTransacEmail(emailData);
+    await tranEmailApi.sendTransacEmail(emailData);
 
     res.status(200).send("User has been created!");
   } catch (error) {
@@ -107,17 +107,17 @@ const activationController = async (req, res) => {
       verification_code +=
         characters[Math.floor(Math.random() * characters.length)];
 
-    // const receivers = [{ email: email },]
-    // const emailData = {
-    //   sender,
-    //   to: receivers,
-    //   subject: "Account activation link",
-    //   htmlContent: ` <p style=text-align:center;>Please use the following code to activate your account - </p>
-    //         <h2 style=text-align:center;>${verification_code}</h3>
-    //         <hr />`,
-    // };
+    const receivers = [{ email: email },]
+    const emailData = {
+      sender,
+      to: receivers,
+      subject: "Account activation link",
+      htmlContent: ` <p style=text-align:center;>Please use the following code to activate your account - </p>
+            <h2 style=text-align:center;>${verification_code}</h3>
+            <hr />`,
+    };
 
-    // await tranEmailApi.sendTransacEmail(emailData);
+    await tranEmailApi.sendTransacEmail(emailData);
 
     return res.status(200).json({ otp: verification_code, message: "OTP Sent" });
   } catch (error) {
@@ -185,17 +185,17 @@ const activationUpdateUserDataController = async (req, res) => {
       verification_code +=
         characters[Math.floor(Math.random() * characters.length)];
 
-    // const receivers = [{ email: email },]
-    // const emailData = {
-    //   sender,
-    //   to: receivers,
-    //   subject: "Account Update link",
-    //   htmlContent: ` <p style=text-align:center;>Please use the following code to update your account - </p>
-    //         <h2 style=text-align:center;>${verification_code}</h3>
-    //         <hr />`,
-    // };
+    const receivers = [{ email: email },]
+    const emailData = {
+      sender,
+      to: receivers,
+      subject: "Account Update link",
+      htmlContent: ` <p style=text-align:center;>Please use the following code to update your account - </p>
+            <h2 style=text-align:center;>${verification_code}</h3>
+            <hr />`,
+    };
 
-    // await tranEmailApi.sendTransacEmail(emailData);
+    await tranEmailApi.sendTransacEmail(emailData);
 
     return res.json({ otp: verification_code, message: " OTP Sent" });
   } catch (error) {
@@ -254,16 +254,16 @@ const forgotPasswordController = async (req, res) => {
     if (!user)
       return res.status(404).json({ error: "User does not exsist!" });
 
-    // const receivers = [{ email: email },]
-    // const emailData = {
-    //   sender,
-    //   to: receivers,
-    //   subject: "Password Reset",
-    //   htmlContent: `  <p>You requested for password reset</p><br><br>
-    // <h5>click in this <a href="https://gorecce-5a416.web.app/reset/${user_id}">link</a> to reset password</h5>`,
-    // };
+    const receivers = [{ email: email },]
+    const emailData = {
+      sender,
+      to: receivers,
+      subject: "Password Reset",
+      htmlContent: `  <p>You requested for password reset</p><br><br>
+    <h5>click in this <a href="https://gorecce-5a416.web.app/reset/${user._id.toString()}">link</a> to reset password</h5>`,
+    };
 
-    // await tranEmailApi.sendTransacEmail(emailData);
+    await tranEmailApi.sendTransacEmail(emailData);
 
     res.json({ message: "check your email..." });
   } catch (error) {
@@ -366,6 +366,8 @@ const updateFavouritesController = async (req, res) => {
     res.status(400).send(error);
   }
 };
+
+
 module.exports = {
   registerController,
   signInController,

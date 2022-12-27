@@ -26,7 +26,7 @@ const {
 router.post("/templocation", tempLocation);
 
 //get temp data
-router.get("/templocation/:location_id", tempLocationGet);
+router.get("/templocation/:id", tempLocationGet);
 
 //Incomplete Listings
 router.get("/incomplist", getAllTempLoc)

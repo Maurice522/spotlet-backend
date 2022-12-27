@@ -106,7 +106,7 @@ const getBookingDetail = async (req, res) => {
 
 const updateBookingStatus = async (req, res) => {
     try {
-        const { bookingId, user_id, status } = req.body;
+        const { bookingId, user_id, status, locationId } = req.body;
 
         const booking = await Booking.findOne({ _id: bookingId });
 
@@ -155,21 +155,21 @@ const updateBookingStatus = async (req, res) => {
             { new: true }
         );
 
-        // const link = "https://gorecce-5a416.web.app/bookingdetails/" + bookingId;
+        const link = "https://gorecce-5a416.web.app/bookingdetails/" + bookingId;
 
-        // const receivers = [{ email: user.personalInfo.email },]
-        // const emailData = {
-        //     sender,
-        //     to: receivers,
-        //     subject: "Location Booking Status",
-        //     htmlContent: `
-        //     <h2>Location Id - ${locationId}</h2>
-        //     <h2>Booking Id - ${bookingId}</h2>
-        //     <p>Your status of booking a location is ${status}</p>
-        //     ${status === "Approved" ? `<p>Please use this link to complete your payment - <b>${link}</b> </p>` : ""}
-        //       <hr />`,
-        // };
-        // await tranEmailApi.sendTransacEmail(emailData);
+        const receivers = [{ email: user.personalInfo.email },]
+        const emailData = {
+            sender,
+            to: receivers,
+            subject: "Location Booking Status",
+            htmlContent: `
+            <h2>Location Id - ${locationId}</h2>
+            <h2>Booking Id - ${bookingId}</h2>
+            <p>Your status of booking a location is ${status}</p>
+            ${status === "Approved" ? `<p>Please use this link to complete your payment - <b>${link}</b> </p>` : ""}
+              <hr />`,
+        };
+        await tranEmailApi.sendTransacEmail(emailData);
 
         return res.status(200).send(`Booking is  ${status}`);
     } catch (error) {

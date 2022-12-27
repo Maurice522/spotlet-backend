@@ -71,9 +71,7 @@ const tempLocation = async (req, res) => {
 
 const tempLocationGet = async (req, res) => {
   try {
-    //create a unique location Id
-    const { location_id } = req.body;
-    const templocation = await TempLocation.findOne({ location_id: location_id });
+    const templocation = await TempLocation.findOne({ location_id: req.params.id });
     return res.status(200).send(templocation);
   } catch (error) {
     return res.status(400).send(error);
@@ -163,15 +161,15 @@ const locationCreate = async (req, res) => {
       { new: true }
     );
 
-    // const receivers = [{ email: user.personalInfo.email },]
-    // const emailData = {
-    //   sender,
-    //   to: receivers,
-    //   subject: "Location Creation Request Sent",
-    //   htmlContent: `<p>Your location ${location_id}, request has been sent to the ADMIN</p>`,
-    // };
+    const receivers = [{ email: user.personalInfo.email },]
+    const emailData = {
+      sender,
+      to: receivers,
+      subject: "Location Creation Request Sent",
+      htmlContent: `<p>Your location ${location_id}, request has been sent to the ADMIN</p>`,
+    };
 
-    // await tranEmailApi.sendTransacEmail(emailData);
+    await tranEmailApi.sendTransacEmail(emailData);
 
     return res.status(200).send("Location Created");
   } catch (error) {
@@ -285,15 +283,15 @@ const approveLocation = async (req, res) => {
       { new: true }
     );
 
-    // const receivers = [{ email: user.personalInfo.email },]
-    // const emailData = {
-    //   sender,
-    //   to: receivers,
-    //   subject: "Location Approved",
-    //   htmlContent: `<p>Your location ${req.params.id}, request has been approved by the ADMIN</p>`,
-    // };
+    const receivers = [{ email: user.personalInfo.email },]
+    const emailData = {
+      sender,
+      to: receivers,
+      subject: "Location Approved",
+      htmlContent: `<p>Your location ${req.params.id}, request has been approved by the ADMIN</p>`,
+    };
 
-    // await tranEmailApi.sendTransacEmail(emailData);
+    await tranEmailApi.sendTransacEmail(emailData);
 
     return res.status(200).send("Location Approved");
   } catch (error) {
@@ -385,6 +383,7 @@ const reviewRatingController = async (req, res) => {
     res.status(400).send(error.message);
   }
 };
+
 
 module.exports = {
   delLocation,
