@@ -1,9 +1,10 @@
 const express = require("express");
 const router = express.Router();
 const multer = require("multer");
+
 const {
   locationCreate,
-  getAllLocations,
+  getAllApprovedLocations,
   tempLocation,
   uploadLocPicsController,
   uploadGSTDoc,
@@ -11,48 +12,54 @@ const {
   deleteFile,
   delLocation,
   approveLocation,
-  incompList,
-  updateLocationInfo,
+  getAllTempLoc,
+  bookedDatesController,
+  reviewRatingController,
   tempLocationGet
 } = require("../controllers/location");
-const memoStorage = multer.memoryStorage();
 
-const upload = multer({ memoStorage });
+// const memoStorage = multer.memoryStorage();
+
+// const upload = multer({ memoStorage });
 
 //Create a Temporary Location
 router.post("/templocation", tempLocation);
 
+//get temp data
+router.get("/templocation/:location_id", tempLocationGet);
+
 //Incomplete Listings
-router.get("/incomplist", incompList)
+router.get("/incomplist", getAllTempLoc)
 
 //Creating a Location.
 router.post("/createlocation", locationCreate);
 
-//approve location
-router.put("/approveloc/:id", approveLocation);
-
 //Get All approved Locations
-router.get("/getlocations", getAllLocations);
+router.get("/getlocations", getAllApprovedLocations);
 
 //Get a location
-router.get("/getlocation/:locId", getLocation);
+router.get("/getlocation/:id", getLocation);
 
 //Delete Location
 router.delete("/dellocation/:id", delLocation);
 
-//upload locations pic
-router.post("/uploadlocpic", upload.single("pic"), uploadLocPicsController);
+//approve location
+router.put("/approveloc/:id", approveLocation);
 
-//upload GST documents 
-router.post("/uploadgst", upload.single("pic"), uploadGSTDoc);
+//upload locations pic
+// router.post("/uploadlocpic", upload.single("pic"), uploadLocPicsController);
+
+//upload GST documents
+// router.post("/uploadgst", upload.single("pic"), uploadGSTDoc);
 
 //delet file from storage
-router.delete("/deletefile", deleteFile);
+// router.delete("/deletefile", deleteFile);
 
-//update created location data
-router.post("/updatelocation/", updateLocationInfo);
+//update booked dates of location
+router.post("/bookeddates/", bookedDatesController);
 
-//get temp data
-router.get("/templocation/:location_id", tempLocationGet);
+//update booked dates of location
+router.post("/reviewrating/", reviewRatingController);
+
 
 module.exports = router;

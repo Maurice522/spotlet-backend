@@ -1,18 +1,21 @@
 "use strict";
-const fireAdmin = require("firebase-admin");
-const db = fireAdmin.firestore();
+// const fireAdmin = require("firebase-admin");
+// const db = fireAdmin.firestore();
 
-const sendQueriesToGorecce = async (req, res) => {
+const ContactUs = require("../models/ContactUs");
+const PhotoShoot = require("../models/PhotoShoot");
+
+
+const sendQueriesToSpotlet = async (req, res) => {
     try {
-        const { fullName, email, mobile, message } = req.body;
-        const data = {
-            timestamp: new Date(),
-            fullName,
-            email,
-            mobile,
-            message
-        }
-        await db.collection("contactus").doc().set(data);
+        const newContactUs = new ContactUs({
+            fullName: req.body.fullName,
+            email: req.body.email,
+            mobile: req.body.mobile,
+            message: req.body.message,
+        });
+
+        const createdContactUs = await newContactUs.save();
         res.status(200).send("sent...");
     } catch (error) {
         return res.status(400).send(error);
@@ -21,24 +24,9 @@ const sendQueriesToGorecce = async (req, res) => {
 }
 const getContact = async (req, res) => {
     try {
-        const user = await db.collection("contactus").get();
-        const oo = user.docs.map((doc) => {
-            return { id: doc.id, ...doc.data() };
-        });
-        res.status(200).send(oo);
+        const contactus = await ContactUs.find().sort({ "timestamp": -1 });;
 
-    } catch (error) {
-        return res.status(400).send(error);
-
-    }
-}
-const getPhotoshoot = async (req, res) => {
-    try {
-        const user = await db.collection("photorequest").get();
-        const oo = user.docs.map((doc) => {
-            return { id: doc.id, ...doc.data() };
-        });
-        res.status(200).send(oo);
+        res.status(200).send(contactus);
 
     } catch (error) {
         return res.status(400).send(error);
@@ -48,23 +36,36 @@ const getPhotoshoot = async (req, res) => {
 
 const photoshootRequest = async (req, res) => {
     try {
-        const { fullName, email, mobile, message } = req.body;
-        const data = {
-            timestamp: new Date(),
-            fullName,
-            email,
-            mobile,
-            address: message
-        }
-        await db.collection("photorequest").doc().set(data);
+        const newPhotoShoot = new PhotoShoot({
+            fullName: req.body.fullName,
+            email: req.body.email,
+            mobile: req.body.mobile,
+            address: req.body.message,
+        });
+
+        const createdPhotoShoot = await newPhotoShoot.save();
         res.status(200).send("sent...");
     } catch (error) {
         return res.status(400).send(error);
     }
 }
 
+
+const getPhotoshoot = async (req, res) => {
+    try {
+        const photoshoot = await PhotoShoot.find().sort({ "timestamp": -1 });;
+
+        res.status(200).send(photoshoot);
+
+    } catch (error) {
+        return res.status(400).send(error);
+
+    }
+}
+
 module.exports = {
-    sendQueriesToGorecce,
+    sendQueriesToSpotlet,
     photoshootRequest,
-    getContact, getPhotoshoot
+    getContact, 
+    getPhotoshoot
 };

@@ -1,26 +1,37 @@
 "use strict";
-const fireAdmin = require("firebase-admin");
-const db = fireAdmin.firestore();
+// const fireAdmin = require("firebase-admin");
+// const db = fireAdmin.firestore();
+
+const Transaction = require("../models/Transaction");
 
 const createTransaction = async (req, res) => {
-    const data = req.body;
     try {
-        await db.collection("transactions").doc(data.bookingid).set(data);
+        const newTransaction = new Transaction({
+            amount: req.body.amount,
+            bookingdate: req.body.bookingdate,
+            bookingid: req.body.bookingid,
+            bookingname: req.body.bookingname,
+            date: req.body.date,
+            hostname: req.body.hostname,
+            locationid: req.body.locationid,
+            status: req.body.status,
+        });
+
+        const createdTransaction = await newTransaction.save();
         return res.send("Transaction Added");
     } catch (error) {
-        return res.status(400).send(error.message);
+        return res.status(400).send(error);
     }
 }
 
 const getTransactions = async (req, res) => {
     try {
-        const snapshot = await db.collection("transactions").get();
-        const transactions = snapshot.docs.map(doc => {
-            return doc.data();
-        })
+        const transactions = await Transaction.find().sort({ "timestamp": -1 });;
+
         res.status(200).send(transactions);
+
     } catch (error) {
-        return res.status(400).send(error.message);
+        return res.status(400).send(error);
     }
 }
 

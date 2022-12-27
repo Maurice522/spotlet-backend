@@ -1,14 +1,18 @@
 "use strict";
 
-const fireAdmin = require("firebase-admin");
-const db = fireAdmin.firestore();
-const { ref, uploadBytes, getDownloadURL, deleteObject } = require("firebase/storage");
+// const fireAdmin = require("firebase-admin");
+// const db = fireAdmin.firestore();
+// const { ref, uploadBytes, getDownloadURL, deleteObject } = require("firebase/storage");
+// const storage = require("../firebase");
+
 const {
   EMAIL_FROM,
   SIB_API,
 } = require("../config/key");
-const storage = require("../firebase");
 const Sib = require('sib-api-v3-sdk');
+const Location = require("../models/Location");
+const TempLocation = require("../models/TempLocation");
+const User = require("../models/User");
 
 const client = Sib.ApiClient.instance
 
@@ -36,22 +40,30 @@ const tempLocation = async (req, res) => {
     //create a unique location Id
     const { location_id, data } = req.body;
     const name = data.property_desc.property_name;
+
     if (!location_id) {
       const preName = name.replace(/\s/g, '').toLowerCase();
       let locationId = preName.substr(0, 4) + generateId();
-      let loc = await db.collection("location").doc(locationId).get();
-      while (loc.exists) {
+      let loc = await Location.findOne({ location_id: locationId });
+      while (loc) {
         locationId = "";
         locationId = preName.substr(4) + generateId();
-        loc = await db.collection("location").doc(locationId).get();
+        loc = await Location.findOne({ location_id: locationId });
       }
-      await db.collection("templocation").doc(locationId).set(data);
-      return res.send(locationId);
+
+      const newTempLoc = new TempLocation({
+        property_desc: data.property_desc,
+        location_id: locationId
+      });
+
+      await newTempLoc.save();
+
+      return res.status(200).send(locationId);
     }
-    // const snapshot = await db.collection("templocation").doc(location_id).get();
-    // const templocation = snapshot.data();
-    await db.collection("templocation").doc(location_id).update(data);
-    return res.send("updated");
+    const temploc = await TempLocation.findOne({ location_id: location_id });
+    await TempLocation.findByIdAndUpdate(temploc._id, { $set: data, }, { new: true });
+
+    return res.status(200).send("updated");
   } catch (error) {
     return res.status(400).send(error);
   }
@@ -61,10 +73,18 @@ const tempLocationGet = async (req, res) => {
   try {
     //create a unique location Id
     const { location_id } = req.body;
-    // console.log(req.body);
-    const snapshot = await db.collection("templocation").doc(req.params.location_id).get();
-    const templocation = snapshot.data();
+    const templocation = await TempLocation.findOne({ location_id: location_id });
     return res.status(200).send(templocation);
+  } catch (error) {
+    return res.status(400).send(error);
+  }
+}
+
+const getAllTempLoc = async (req, res) => {
+  try {
+    const templocations = await TempLocation.find().sort({ "timestamp": -1 });;
+
+    res.status(200).send(templocations);
   } catch (error) {
     return res.status(400).send(error);
   }
@@ -72,15 +92,18 @@ const tempLocationGet = async (req, res) => {
 
 const locationCreate = async (req, res) => {
   try {
-    const { property_desc, pricing } = req.body.data;
     const { location_id } = req.body;
-    const { user_id } = property_desc;
+    const { property_desc, pricing } = req.body.data;
 
+    const { user_id } = property_desc;
     const { film_webseries_ad, tv_series_other, corporate, individual, cleaningFee } = pricing;
 
-    const data = {
-      timestamp: new Date(),
+    if (!user_id)
+      return res.status(401).send("Invalid User");
+
+    const newLocation = new Location({
       ...req.body.data,
+      location_id: location_id,
       pricing: {
         cleaningFee: cleaningFee,
         film_webseries_ad: {
@@ -104,20 +127,14 @@ const locationCreate = async (req, res) => {
           hourly_rate: individual.hourly_rate
         },
       },
+      review_and_rating: {},
       verified: "Under Review"
-    };
+    })
 
-    if (!user_id) return res.status(422).send("Invalid user");
+    const createdLocation = await newLocation.save();
 
-    await db.collection("location").doc(location_id).set(data);
-    await db.collection("templocation").doc(location_id).delete()
-    const snapshot = await db.collection("users").doc(user_id).get();
-    const user = snapshot.data();
-    // console.log(user);
-    await db
-      .collection("users")
-      .doc(user_id)
-      .update({ ...user, listedLocations: [...user.listedLocations, { ...data, location_id }] });
+    const temploc = await TempLocation.findOne({ location_id: location_id });
+    await TempLocation.findByIdAndDelete(temploc._id);
 
     var today = new Date();
     var dd = String(today.getDate()).padStart(2, '0');
@@ -131,34 +148,84 @@ const locationCreate = async (req, res) => {
       date: `${today}`,
       admin: false
     }
-    // console.log(notification);
-    const snapshot2 = await db.collection("users").doc(user_id).get();
-    const user2 = snapshot2.data();
-    await db.collection("users").doc(user_id).update({ ...user2, notifications: [...user2.notifications, notification], notificationFlag: true });
 
-    const receivers = [{ email: user.personalInfo.email },]
-    const emailData = {
-      sender,
-      to: receivers,
-      subject: "Location Creation Request Sent",
-      htmlContent: `<p>Your location ${location_id}, request has been sent to the ADMIN</p>`,
-    };
+    const user = await User.findOne({ _id: user_id });
 
-    await tranEmailApi.sendTransacEmail(emailData);
+    await User.findByIdAndUpdate(user_id,
+      {
+        $set: {
+          ...user._doc,
+          listedLocations: [...user.listedLocations, createdLocation],
+          notifications: [...user.notifications, notification],
+          notificationFlag: true
+        },
+      },
+      { new: true }
+    );
 
-    return res.send("Location Created");
+    // const receivers = [{ email: user.personalInfo.email },]
+    // const emailData = {
+    //   sender,
+    //   to: receivers,
+    //   subject: "Location Creation Request Sent",
+    //   htmlContent: `<p>Your location ${location_id}, request has been sent to the ADMIN</p>`,
+    // };
+
+    // await tranEmailApi.sendTransacEmail(emailData);
+
+    return res.status(200).send("Location Created");
   } catch (error) {
     return res.status(400).send(error);
   }
 };
 
-const getAllLocations = async (req, res) => {
+const getAllApprovedLocations = async (req, res) => {
   try {
-    const snapshots = await db.collection("location").where("verified", "==", "Approved").orderBy("timestamp", "desc").get();
-    const locations = snapshots.docs.map(doc => {
-      return { location_id: doc.id, ...doc.data() };
+    const locations = await Location.find().sort({ "timestamp": -1 });;
+    return res.status(200).json(locations);
+  } catch (error) {
+    return res.status(400).send(error);
+  }
+}
+
+const getLocation = async (req, res) => {
+  try {
+    const location = await Location.findOne({ location_id: req.params.id });
+    if (!location)
+      return res.status(404).send("No location found...");
+    return res.status(200).send(location);
+  } catch (error) {
+    return res.status(400).send(error);
+  }
+}
+
+const delLocation = async (req, res) => {
+  try {
+    const location = await Location.findOne({ location_id: req.params.id });
+    await Location.findByIdAndDelete(location._id);
+
+    const user_id = location._doc.property_desc.user_id;
+
+    const user = await User.findOne({ _id: user_id });
+
+    const listedloc = user._doc.listedLocations;
+    const deletelistedloc = listedloc.map((loc) => {
+      if (req.params.id !== loc.location_id) {
+        return loc;
+      }
     })
-    return res.json({ locations });
+
+    await User.findByIdAndUpdate(user_id,
+      {
+        $set: {
+          ...user._doc,
+          listedLocations: deletelistedloc ? deletelistedloc : [],
+        },
+      },
+      { new: true }
+    );
+
+    res.status(200).send("Location Deleted");
   } catch (error) {
     return res.status(400).send(error);
   }
@@ -166,19 +233,31 @@ const getAllLocations = async (req, res) => {
 
 const approveLocation = async (req, res) => {
   try {
-    const { userid } = req.body;
-    await db.collection("location").doc(req.params.id).update({ "verified": "Approved" });
-    const snapshot = await db.collection("users").doc(userid).get();
-    const user = snapshot.data()
-    const listedloc = user.listedLocations;
-    for (let i = 0; i < listedloc.length; i++) {
-      if (req.params.id === listedloc[i].location_id) {
-        listedloc[i].verified = "Approved"
+    const { user_id } = req.body;
+
+    const location = await Location.findOne({ location_id: req.params.id });
+    if (!location)
+      return res.status(404).send("No location found...");
+
+    await Location.findByIdAndUpdate(location._id,
+      {
+        $set: {
+          ...location._doc,
+          verified: "Approved"
+        },
+      },
+      { new: true }
+    );
+
+
+    const user = await User.findOne({ _id: user_id });
+
+    const listedloc = user._doc.listedLocations;
+    listedloc.map((loc) => {
+      if (req.params.id === loc.location_id) {
+        loc.verified = "Approved"
       }
-    }
-    await db.collection("users")
-      .doc(userid)
-      .update({ ...user, listedLocations: listedloc });
+    })
 
     var today = new Date();
     var dd = String(today.getDate()).padStart(2, '0');
@@ -194,42 +273,29 @@ const approveLocation = async (req, res) => {
     }
     // console.log(notification);
 
-    await db.collection("users").doc(userid).update({ ...user, notifications: [...user.notifications, notification], notificationFlag: true });
+    await User.findByIdAndUpdate(user_id,
+      {
+        $set: {
+          ...user._doc,
+          listedLocations: listedloc,
+          notifications: [...user.notifications, notification],
+          notificationFlag: true
+        },
+      },
+      { new: true }
+    );
 
-    const receivers = [{ email: user.personalInfo.email },]
-    const emailData = {
-      sender,
-      to: receivers,
-      subject: "Location Approved",
-      htmlContent: `<p>Your location ${req.params.id}, request has been approved by the ADMIN</p>`,
-    };
+    // const receivers = [{ email: user.personalInfo.email },]
+    // const emailData = {
+    //   sender,
+    //   to: receivers,
+    //   subject: "Location Approved",
+    //   htmlContent: `<p>Your location ${req.params.id}, request has been approved by the ADMIN</p>`,
+    // };
 
-    await tranEmailApi.sendTransacEmail(emailData);
+    // await tranEmailApi.sendTransacEmail(emailData);
 
-    return res.send("Location Approved");
-  } catch (error) {
-    return res.status(400).send(error);
-  }
-}
-const incompList = async (req, res) => {
-  try {
-    const user = await db.collection("templocation").get();
-    const oo = user.docs.map((doc) => {
-      return { id: doc.id, ...doc.data() };
-    });
-    res.status(200).send(oo);
-
-  } catch (error) {
-    return res.status(400).send(error);
-  }
-}
-
-const getLocation = async (req, res) => {
-  try {
-    const snapshot = await db.collection("location").doc(req.params.locId).get();
-    if (!snapshot.exists) return res.send("No location found...");
-    const location = snapshot.data();
-    return res.status(200).send(location);
+    return res.status(200).send("Location Approved");
   } catch (error) {
     return res.status(400).send(error);
   }
@@ -261,40 +327,6 @@ const uploadGSTDoc = async (req, res) => {
   }
 };
 
-const twilio = async (req, res) => {
-  try {
-    const client = require("twilio")(accountSid, authToken);
-    client.messages
-      .create({
-        body: message,
-        from: config.service.twilio_phone_number,
-        to: phone,
-      })
-      .then((message) => console.log(message.sid));
-
-
-  } catch (error) {
-    return res.status(422).send(error);
-  }
-}
-
-// const getLocation = async (req, res) => {
-//   try {
-//     const location = await db.collection("location").doc(req.params.id).get();
-//     res.status(200).send(location.data());
-//   } catch (error) {
-//     return res.status(422).send(error);
-//   }
-// }
-const delLocation = async (req, res) => {
-  try {
-    await db.collection("location").doc(req.params.id).delete();
-    res.status(200).send("Location Deleted");
-  } catch (error) {
-    return res.status(422).send(error);
-  }
-}
-
 const deleteFile = async (req, res) => {
   try {
     const { image, fileRef } = req.body;
@@ -310,49 +342,62 @@ const deleteFile = async (req, res) => {
   }
 }
 
-//update location details
-const updateLocationUtil = async (data) => {
+//booked dates
+const bookedDatesController = async (req, res) => {
   try {
-    // console.log(data);
-    const { location_id, newLocData } = data;
-    await db.collection("location").doc(location_id).update(newLocData);
-    const user_id = newLocData.property_desc.user_id;
-    const snapshot = await db.collection("users").doc(user_id).get();
-    const user = snapshot.data();
-    const listedloc = user.listedLocations;
-    for (let i = 0; i < listedloc.length; i++) {
-      if (location_id === listedloc[i].location_id) {
-        listedloc[i] = newLocData
-      }
-    }
-    // console.log(listedloc);
-    await db.collection("users").doc(user_id).update({ ...user, listedLocations: listedloc });
-  } catch (error) {
-    console.log(error);
-  }
-}
+    const { location_id, bookedDates } = req.body;
 
-const updateLocationInfo = async (req, res) => {
-  try {
-    await updateLocationUtil(req.body);
-    return res.status(200).send("Location Updated")
+    const location = await Location.findOne({ location_id: location_id });
+
+    await Location.findByIdAndUpdate(location._id,
+      {
+        $set: {
+          ...location._doc,
+          bookedDates: bookedDates
+        },
+      },
+      { new: true }
+    );
+    res.status(200).json({ message: "date booked" });
   } catch (error) {
-    return res.status(422).send(error);
+    res.status(400).send(error);
   }
-}
+};
+
+//reviw rating
+const reviewRatingController = async (req, res) => {
+  try {
+    const { location_id, review_and_rating } = req.body;
+
+    const location = await Location.findOne({ location_id: location_id });
+
+    await Location.findByIdAndUpdate(location._id,
+      {
+        $set: {
+          ...location._doc,
+          review_and_rating: [...location.review_and_rating, review_and_rating]
+        },
+      },
+      { new: true }
+    );
+    res.status(200).json({ message: "review and rating created" });
+  } catch (error) {
+    res.status(400).send(error.message);
+  }
+};
 
 module.exports = {
   delLocation,
   locationCreate,
   getLocation,
-  getAllLocations,
+  getAllApprovedLocations,
   tempLocation,
-  uploadLocPicsController,
-  uploadGSTDoc,
-  deleteFile,
-  twilio,
+  // uploadLocPicsController,
+  // uploadGSTDoc,
+  // deleteFile,
   approveLocation,
-  incompList,
-  updateLocationInfo,
+  getAllTempLoc,
+  bookedDatesController,
+  reviewRatingController,
   tempLocationGet
 };

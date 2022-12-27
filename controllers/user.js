@@ -1,7 +1,9 @@
 "use strict";
 
-const fireAdmin = require("firebase-admin");
-const db = fireAdmin.firestore();
+// const fireAdmin = require("firebase-admin");
+// const db = fireAdmin.firestore();
+// const { ref, uploadBytes, getDownloadURL } = require("firebase/storage");
+// const storage = require("../firebase");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 
@@ -11,8 +13,7 @@ const {
   SIB_API,
 } = require("../config/key");
 const Sib = require('sib-api-v3-sdk');
-const { ref, uploadBytes, getDownloadURL } = require("firebase/storage");
-const storage = require("../firebase");
+const User = require("../models/User");
 
 const client = Sib.ApiClient.instance
 
@@ -25,31 +26,22 @@ const sender = {
   name: "Spotlet"
 }
 
-// sgMail.setApiKey(SIB_API);
-
 const registerController = async (req, res) => {
   try {
-    const {
-      firstName,
-      lastName,
-      mobile,
-      email,
-      password,
-      company,
-      profession,
-      booking_type,
-    } = req.body;
-    const fullName = firstName + " " + lastName;
-    const hashedPassword = await bcrypt.hash(password, 13);
-    const data = {
+
+    const fullName = req.body.firstName + " " + req.body.lastName;
+    const salt = await bcrypt.genSalt(13);
+    const hashedPassword = await bcrypt.hash(req.body.password, salt);
+
+    const newUser = new User({
       personalInfo: {
-        fullName,
-        mobile,
-        email,
+        fullName: fullName,
+        mobile: req.body.mobile,
+        email: req.body.email,
         password: hashedPassword,
-        booking_type,
-        [booking_type === "individual" ? "profession" : "company"]:
-          booking_type === "individual" ? profession : company,
+        booking_type: req.body.booking_type,
+        [req.body.booking_type === "individual" ? "profession" : "company"]:
+          req.body.booking_type === "individual" ? req.body.profession : req.body.company,
         profile_pic: "",
       },
       favourites: [],
@@ -57,56 +49,57 @@ const registerController = async (req, res) => {
       portfolio: [],
       notifications: [],
       notificationFlag: false,
-      timestamp: new Date(),
-    };
-    await db.collection("users").doc().set(data);
-
-    const snapshot = await db
-      .collection("users")
-      .where(`personalInfo.email`, "==", email)
-      .get();
-    let user_id;
-    snapshot.forEach(async (doc) => {
-      user_id = doc.id;
     });
-    const token = jwt.sign({ _id: user_id }, JWT_SECRET, { expiresIn: "7d" });
 
-    const receivers = [{ email: email },]
-    const emailData = {
-      sender,
-      to: receivers,
-      subject: "Welcome to Spotlet",
-      htmlContent: ` <p style=text-align:center;>SpotLet connects people through unique spaces. 
-      State-of-the-art online platform enables guests to look for specific locations, 
-      communicate with their hosts, and make payments quickly, all in a single place. 
-      They aspire to create a community wherein you can always meet, create and 
-      celebrate with like-minded people through our online marketplace. 
-      So book the best spaces for any activity and enjoy a rewarding experience. 
-      We aspire to provide guests with a simplified booking platform and 
-      give property owners in India a channel to showcase their spaces and earn additional income. </p>`,
-    };
+    // if user already exsist
+    const exsitedUserEmail = await User.findOne({ "personalInfo.email": req.body.email });
+    if (exsitedUserEmail)
+      return res.status(403).json("email already exsist");
 
-    await tranEmailApi.sendTransacEmail(emailData);
+    const exsitedUserMobile = await User.findOne({ "personalInfo.mobile": req.body.mobile });
+    if (exsitedUserMobile)
+      return res.status(403).json("mobile already exsist");
 
-    return res.send(token);
+    const createdUser = await newUser.save();
+
+    // const receivers = [{ email: req.body.email },]
+    // const emailData = {
+    //   sender,
+    //   to: receivers,
+    //   subject: "Welcome to Spotlet",
+    //   htmlContent: ` <p style=text-align:center;>SpotLet connects people through unique spaces. 
+    //   State-of-the-art online platform enables guests to look for specific locations, 
+    //   communicate with their hosts, and make payments quickly, all in a single place. 
+    //   They aspire to create a community wherein you can always meet, create and 
+    //   celebrate with like-minded people through our online marketplace. 
+    //   So book the best spaces for any activity and enjoy a rewarding experience. 
+    //   We aspire to provide guests with a simplified booking platform and 
+    //   give property owners in India a channel to showcase their spaces and earn additional income. </p>`,
+    // };
+
+    // await tranEmailApi.sendTransacEmail(emailData);
+
+    res.status(200).send("User has been created!");
   } catch (error) {
-    return res.status(400).send(error.message);
+    return res.status(400).send(error);
   }
 };
 
 const activationController = async (req, res) => {
   try {
-    const { firstName, lastName, mobile, email, password, job, booking_type } =
-      req.body;
+    const { firstName, lastName, mobile, email, password, booking_type } = req.body;
     if (!firstName || !mobile || !email || !password || !booking_type)
-      return res.status(422).json({ error: "please fill all fields" });
-    //find user if already present
-    const snapshot = await db
-      .collection("users")
-      .where(`personalInfo.email`, "==", email)
-      .get();
-    if (!snapshot.empty)
-      return res.status(422).json({ error: "user already exists!" });
+      return res.status(400).json({ error: "please fill all fields" });
+
+    // if user already exsist
+    const exsitedUserEmail = await User.findOne({ "personalInfo.email": req.body.email });
+    if (exsitedUserEmail)
+      return res.status(403).json("email already exsist");
+
+    const exsitedUserMobile = await User.findOne({ "personalInfo.mobile": req.body.mobile });
+    if (exsitedUserMobile)
+      return res.status(403).json("mobile already exsist");
+
     //otp
     let verification_code = "";
     const characters = "0123456789";
@@ -114,19 +107,19 @@ const activationController = async (req, res) => {
       verification_code +=
         characters[Math.floor(Math.random() * characters.length)];
 
-    const receivers = [{ email: email },]
-    const emailData = {
-      sender,
-      to: receivers,
-      subject: "Account activation link",
-      htmlContent: ` <p style=text-align:center;>Please use the following code to activate your account - </p>
-            <h2 style=text-align:center;>${verification_code}</h3>
-            <hr />`,
-    };
+    // const receivers = [{ email: email },]
+    // const emailData = {
+    //   sender,
+    //   to: receivers,
+    //   subject: "Account activation link",
+    //   htmlContent: ` <p style=text-align:center;>Please use the following code to activate your account - </p>
+    //         <h2 style=text-align:center;>${verification_code}</h3>
+    //         <hr />`,
+    // };
 
-    await tranEmailApi.sendTransacEmail(emailData);
+    // await tranEmailApi.sendTransacEmail(emailData);
 
-    return res.status(200).json({ otp: verification_code, message: " OTP Sent" });
+    return res.status(200).json({ otp: verification_code, message: "OTP Sent" });
   } catch (error) {
     return res.json(error);
   }
@@ -136,75 +129,52 @@ const signInController = async (req, res) => {
   try {
     const { email, password } = req.body;
     if (!email || !password)
-      return res.status(422).json({ error: "Please add details!" });
+      return res.status(400).json({ error: "Please add details!" });
+
     //find user
-    const snapshot = await db
-      .collection("users")
-      .where(`personalInfo.email`, "==", email)
-      .get();
-    if (snapshot.empty)
-      return res.status(422).json({ error: "Invalid email and password!!" });
-    //compare password
-    let user, user_id;
-    snapshot.forEach(async (doc) => {
-      user_id = doc.id;
-      user = doc.data();
-    });
+    const user = await User.findOne({ "personalInfo.email": req.body.email });
+    if (!user)
+      return res.status(404).json({ error: "User does not exsist!" });
+
     const doMatch = await bcrypt.compare(password, user.personalInfo.password);
+
     if (doMatch) {
-      const token = jwt.sign({ _id: user_id }, JWT_SECRET, { expiresIn: "7d" });
-      return res.json({ token: token });
-    } else return res.status(422).json({ error: "Invalid Email or Password!" });
+      const token = jwt.sign({ _id: user._id }, JWT_SECRET, { expiresIn: "7d" });
+      console.log(token);
+      return res.status(200).json({ token: token });
+    } else
+      return res.status(401).json({ error: "Invalid Email or Password!" });
+
   } catch (error) {
     return res.send(error);
   }
 };
-const getUsersController = async (req, res) => {
+
+
+const getAllUsersController = async (req, res) => {
   try {
-    const user = await db.collection("users").get();
-    const oo = user.docs.map((doc) => {
-      return { id: doc.id, ...doc.data() };
-    });
-    res.status(200).send(oo);
+    const users = await User.find().sort({ "timestamp": -1 });;
+
+    res.status(200).send(users);
   } catch (error) {
-    res.status(422).send(error);
+    res.send(error);
   }
 };
 
 const getUserDataController = async (req, res) => {
   try {
-    const user = await db.collection("users").doc(req.params.id).get();
-    const type = user.data().personalInfo.booking_type;
-    const userData = {
-      personalInfo: {
-        fullName: user.data().personalInfo.fullName,
-        email: user.data().personalInfo.email,
-        mobile: user.data().personalInfo.mobile,
-        password: user.data().personalInfo.password,
-        booking_type: user.data().personalInfo.booking_type,
-        [type === "individual" ? "profession" : "company"]:
-          type === "individual"
-            ? user.data().personalInfo.profession
-            : user.data().personalInfo.company,
-        profile_pic: user.data().personalInfo.profile_pic,
-      },
-      favourites: user.data().favourites,
-      listedLocations: user.data().listedLocations,
-      portfolio: user.data().portfolio,
-      notifications: user.data().notifications,
-      notificationFlag: user.data().notificationFlag,
-    };
-    return res.status(200).send(userData);
+    const user = await User.findOne({ _id: req.params.id });
+
+    return res.status(200).send(user);
   } catch (error) {
-    res.status(422).send(error);
+    res.send(error);
   }
 };
 
 //update user personal_info data activation
 const activationUpdateUserDataController = async (req, res) => {
   try {
-    const { fullName, mobile, email, job, booking_type } =
-      req.body;
+    const { fullName, mobile, email, booking_type } = req.body;
     if (!fullName || !mobile || !email || !booking_type)
       return res.status(422).json({ error: "please fill all fields" });
 
@@ -215,17 +185,17 @@ const activationUpdateUserDataController = async (req, res) => {
       verification_code +=
         characters[Math.floor(Math.random() * characters.length)];
 
-    const receivers = [{ email: email },]
-    const emailData = {
-      sender,
-      to: receivers,
-      subject: "Account Update link",
-      htmlContent: ` <p style=text-align:center;>Please use the following code to update your account - </p>
-            <h2 style=text-align:center;>${verification_code}</h3>
-            <hr />`,
-    };
+    // const receivers = [{ email: email },]
+    // const emailData = {
+    //   sender,
+    //   to: receivers,
+    //   subject: "Account Update link",
+    //   htmlContent: ` <p style=text-align:center;>Please use the following code to update your account - </p>
+    //         <h2 style=text-align:center;>${verification_code}</h3>
+    //         <hr />`,
+    // };
 
-    await tranEmailApi.sendTransacEmail(emailData);
+    // await tranEmailApi.sendTransacEmail(emailData);
 
     return res.json({ otp: verification_code, message: " OTP Sent" });
   } catch (error) {
@@ -236,36 +206,28 @@ const activationUpdateUserDataController = async (req, res) => {
 //update user personal_info data
 const updateUserDataController = async (req, res) => {
   try {
-    const {
-      booking_type,
-      email,
-      fullName,
-      company,
-      mobile,
-      profile_pic,
-      profession,
-    } = req.body;
-    // console.log(req.body);
-    const snapshot = await db.collection("users").doc(req.params.id).get();
-    const user = snapshot.data();
+
+    const user = await User.findOne({ _id: req.params.id });
 
     const updatedUser = {
-      ...user,
+      ...user._doc,
       personalInfo: {
-        booking_type,
-        email,
+        fullName: req.body.fullName,
+        mobile: req.body.mobile,
+        email: req.body.email,
         password: user.personalInfo.password,
-        fullName,
-        mobile,
-        profile_pic,
-        [booking_type === "individual" ? "profession" : "company"]:
-          booking_type === "individual" ? profession : company,
+        booking_type: req.body.booking_type,
+        [req.body.booking_type === "individual" ? "profession" : "company"]:
+          req.body.booking_type === "individual" ? req.body.profession : req.body.company,
+        profile_pic: "",
       },
     };
-    await db.collection("users").doc(req.params.id).update(updatedUser);
+
+    await User.findByIdAndUpdate(req.params.id, { $set: updatedUser, }, { new: true });
+
     return res.status(200).json({ message: "user updated" });
   } catch (error) {
-    res.status(422).send(error);
+    res.status(400).send(error);
   }
 };
 
@@ -284,25 +246,25 @@ const uploadPicController = async (req, res) => {
 
 const forgotPasswordController = async (req, res) => {
   try {
-    //find user
     const { email } = req.body;
-    const snapshot = await db
-      .collection("users")
-      .where(`personalInfo.email`, "==", email)
-      .get();
-    if (snapshot.empty)
-      return res.status(422).json({ error: "User not exist with this email!" });
-    let user_id;
-    snapshot.forEach(async (doc) => {
-      user_id = doc.id;
-    });
-    sgMail.send({
-      to: email,
-      from: EMAIL_FROM,
-      subject: "Password Reset",
-      html: `  <p>You requested for password reset</p><br><br>
-      <h5>click in this <a href="https://gorecce-5a416.web.app/reset/${user_id}">link</a> to reset password</h5>`,
-    });
+
+    //find user
+    const user = await User.findOne({ "personalInfo.email": req.body.email });
+
+    if (!user)
+      return res.status(404).json({ error: "User does not exsist!" });
+
+    // const receivers = [{ email: email },]
+    // const emailData = {
+    //   sender,
+    //   to: receivers,
+    //   subject: "Password Reset",
+    //   htmlContent: `  <p>You requested for password reset</p><br><br>
+    // <h5>click in this <a href="https://gorecce-5a416.web.app/reset/${user_id}">link</a> to reset password</h5>`,
+    // };
+
+    // await tranEmailApi.sendTransacEmail(emailData);
+
     res.json({ message: "check your email..." });
   } catch (error) {
     res.status(422).send(error);
@@ -312,68 +274,98 @@ const forgotPasswordController = async (req, res) => {
 const resetPasswordController = async (req, res) => {
   try {
     const { newPassword } = req.body;
-    const snapshot = await db.collection("users").doc(req.params.id).get();
-    const user = snapshot.data();
-    const newHashedPassword = await bcrypt.hash(newPassword, 13);
-    await db
-      .collection("users")
-      .doc(req.params.id)
-      .update({
-        ...user,
-        personalInfo: { ...user.personalInfo, password: newHashedPassword },
-      });
-    return res.status(200).json({ message: "password changed..." });
+    const user = await User.findOne({ _id: req.params.id });
+
+    const salt = await bcrypt.genSalt(13);
+    const newHashedPassword = await bcrypt.hash(newPassword, salt);
+
+    const updatedUser = {
+      ...user._doc,
+      personalInfo: { ...user.personalInfo, password: newHashedPassword },
+    };
+
+    await User.findByIdAndUpdate(req.params.id, { $set: updatedUser, }, { new: true });
+
+    res.status(200).json({ message: "password changed..." });
   } catch (error) {
-    res.status(422).send(error);
+    res.status(400).send(error);
   }
 };
 
 const updatePasswordController = async (req, res) => {
   try {
     const { currentPassword, newPassword } = req.body;
-    const snapshot = await db.collection("users").doc(req.params.id).get();
-    const user = snapshot.data();
+    if (currentPassword === newPassword)
+      return res.status(401).json({ error: "new password cannot be same as old password" });
+
+    const user = await User.findOne({ _id: req.params.id });
+
     const doMatch = await bcrypt.compare(
       currentPassword,
       user.personalInfo.password
     );
     if (!doMatch)
-      return res.status(422).json({ error: "Old Password is not correct!!" });
-    const newHashedPassword = await bcrypt.hash(newPassword, 13);
-    await db
-      .collection("users")
-      .doc(req.params.id)
-      .update({
-        ...user,
-        personalInfo: { ...user.personalInfo, password: newHashedPassword },
-      });
-    return res.status(200).json({ message: "password updated." });
+      return res.status(401).json({ error: "Old Password is not correct!!" });
+
+    const salt = await bcrypt.genSalt(13);
+    const newHashedPassword = await bcrypt.hash(newPassword, salt);
+
+    const updatedUser = {
+      ...user._doc,
+      personalInfo: { ...user.personalInfo, password: newHashedPassword },
+    };
+
+    await User.findByIdAndUpdate(req.params.id, { $set: updatedUser, }, { new: true });
+
+    res.status(200).json({ message: "password updated." });
   } catch (error) {
-    res.status(422).send(error);
+    res.status(400).send(error);
   }
 };
 
-//update user's fav, listed location, personal info and portfolio
-const updateUserUtil = async (data) => {
+//notification handler
+const updateNotificationFlagController = async (req, res) => {
   try {
-    // console.log(data);
-    const { updatedUserData, user_id } = data;
-    await db.collection("users").doc(user_id).update(updatedUserData);
-  } catch (error) {
-    console.log(error);
-  }
-}
+    const { user_id } = req.body;
 
-const updateUserInfo = async (req, res) => {
+    const user = await User.findOne({ _id: user_id });
+
+    await User.findByIdAndUpdate(user_id,
+      {
+        $set: {
+          ...user._doc,
+          notificationFlag: false
+        },
+      },
+      { new: true }
+    );
+    res.status(200).json({ message: "notification seen" });
+  } catch (error) {
+    res.status(400).send(error);
+  }
+};
+
+//favourites handler
+const updateFavouritesController = async (req, res) => {
   try {
-    // console.log(req.body);
-    await updateUserUtil(req.body);
-    return res.status(200).send("updated user")
-  } catch (error) {
-    return res.status(422).send(error);
-  }
-}
+    const { user_id, favourites } = req.body;
 
+    const user = await User.findOne({ _id: user_id });
+
+    await User.findByIdAndUpdate(user_id,
+      {
+        $set: {
+          ...user._doc,
+          favourites: favourites
+        },
+      },
+      { new: true }
+    );
+    res.status(200).json({ message: "favourites updated" });
+  } catch (error) {
+    res.status(400).send(error);
+  }
+};
 module.exports = {
   registerController,
   signInController,
@@ -383,8 +375,9 @@ module.exports = {
   updateUserDataController,
   updatePasswordController,
   forgotPasswordController,
-  getUsersController,
+  getAllUsersController,
   resetPasswordController,
-  uploadPicController,
-  updateUserInfo
+  updateNotificationFlagController,
+  updateFavouritesController
+  // uploadPicController,
 };

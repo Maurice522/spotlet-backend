@@ -1,17 +1,18 @@
 const express = require("express");
-const { sendQueriesToGorecce, photoshootRequest,getContact,getPhotoshoot } = require("../controllers/contactUs");
 const router = express.Router();
 
-//Contact us
-router.post("/contactus", sendQueriesToGorecce);
+const { sendQueriesToSpotlet, photoshootRequest, getContact, getPhotoshoot } = require("../controllers/contactUs");
 
-router.get("/getContact",getContact);
+//Contact us
+router.post("/contactus", sendQueriesToSpotlet);
+
+router.get("/getContact", getContact);
 
 
 //Photo Graph form
 router.post("/photoshootreq", photoshootRequest);
 
-router.get("/getPhotoshoot",getPhotoshoot);
+router.get("/getPhotoshoot", getPhotoshoot);
 
 
 module.exports = router;

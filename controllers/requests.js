@@ -1,78 +1,110 @@
 "use strict";
-const fireAdmin = require("firebase-admin");
-const db = fireAdmin.firestore();
-const { EMAIL_FROM, SIB_API, EMAIL } = require("../config/key");
-const sgMail = require("@sendgrid/mail");
+// const fireAdmin = require("firebase-admin");
+// const db = fireAdmin.firestore();
+const {
+  EMAIL_FROM,
+  SIB_API,
+} = require("../config/key");
+const Sib = require('sib-api-v3-sdk');
+const Location = require("../models/Location");
+const User = require("../models/User");
+const DeactRequest = require("../models/DeactRequest");
 
+//SendInBlue Mail
+const client = Sib.ApiClient.instance
+
+const apiKey = client.authentications['api-key']
+apiKey.apiKey = SIB_API
+
+const tranEmailApi = new Sib.TransactionalEmailsApi();
+const sender = {
+  email: EMAIL_FROM,
+  name: "Spotlet"
+}
 
 const deleteUser = async (req, res) => {
   try {
-      // const data=await db.collection("users").doc(req.params.id).get(email);
-      // const emailData = {
-      //     from: EMAIL_FROM,
-      //     to: "saketmundra2707@gmail.com",
-      //     subject: "Account Deactivated",
-      //     html: ` <p style=text-align:center;>Your Account has been Deactivated</p>
-      //           <hr />`,
-      //   };
-      // await sgMail.send(emailData);
-      await db.collection("users").doc(req.params.id).delete();
-      await db.collection("requests").doc(req.params.id).delete();
-      return res.status(200).send("User Deleted");
+    await User.deleteOne({ _id: req.params.id });
+    await DeactRequest.deleteMany({ user_id: req.params.id });
+
+    // const receivers = [{ email: user.personalInfo.email },]
+    // const emailData = {
+    //   sender,
+    //   to: receivers,
+    //   subject: "Account Deactivated",
+    //   htmlContent: ` <p style=text-align:center;>Your Account has been Deactivated</p>
+    //     <hr />`,
+    // };
+    // await tranEmailApi.sendTransacEmail(emailData);
+
+    return res.status(200).send("User Deleted");
   } catch (error) {
-      return res.status(400).json(error);
+    return res.status(400).json(error);
   }
 }
+
 const rejectdeac = async (req, res) => {
   try {
-      await db.collection("requests").doc(req.params.id).delete();
-      return res.status(200).send("Request Rejected");
+    await DeactRequest.deleteMany({ user_id: req.params.id });
+
+    // const receivers = [{ email: user.personalInfo.email },]
+    // const emailData = {
+    //   sender,
+    //   to: receivers,
+    //   subject: "Account Deactivation",
+    //   htmlContent: ` <p style=text-align:center;>Your Account Deactivation Request has been REJECTED</p>
+    //     <hr />`,
+    // };
+    // await tranEmailApi.sendTransacEmail(emailData);
+
+    return res.status(200).send("Request Rejected");
   } catch (error) {
-      return res.status(400).json(error);
+    return res.status(400).json(error);
 
   }
 }
-const deleteReq = async (req, res) => {
+
+const getDeleteReqs = async (req, res) => {
   try {
-      const data = await db.collection("requests").get();
-      res.send(data.docs.map(doc => doc.data()));
+    const requests = await DeactRequest.find().sort({ "timestamp": -1 });
+    res.status(200).send(requests);
   } catch (error) {
-      return res.status(400).json(error);
+    return res.status(400).json(error);
   }
 }
-const deleterequests = async (req, res) => {
+
+const sendDeactivationReq = async (req, res) => {
   try {
-    // console.log("del");
-    const user = await db.collection("users").doc(req.params.id).get();
-    const data = {
-      timestamp: new Date(),
-      id:req.params.id,
-      CustomerName: user.data().personalInfo.fullName,
-      CustomerEmail: user.data().personalInfo.email,
-      CustomerImage:user.data().personalInfo.profile_pic,
-      Mobile:user.data().personalInfo.mobile
-    };
-    await db.collection("requests").doc(req.params.id).set(data);
-    return res.send("Deactivation Request Sent");
-  } catch (error) {
-    return res.status(400).send(error.message);
-  }
-};
-const locationrequests = async (req, res) => {
-  try {
-    const snapshots = await db.collection("location").where("verified", "==", "Under Review").orderBy("timestamp", "desc").get();
-    const locations = snapshots.docs.map(doc => {
-      return { location_id : doc.id, ...doc.data()};
-    })
-    return res.json({locations});
+    const user = await User.findOne({ _id: req.params.id });
+
+    const newReq = new DeactRequest({
+      user_id: req.params.id,
+      CustomerName: user._doc.personalInfo.fullName,
+      CustomerEmail: user._doc.personalInfo.email,
+      CustomerImage: user._doc.personalInfo.profile_pic,
+      Mobile: user._doc.personalInfo.mobile
+    });
+
+    await newReq.save();
+    return res.status(200).send("Deactivation Request Sent");
   } catch (error) {
     return res.status(400).send(error);
   }
 };
 
-module.exports = {deleteUser,
+const locationrequests = async (req, res) => {
+  try {
+    const locations = await Location.find({ verified: "Under Review" }).sort({ "timestamp": -1 });;
+    return res.status(200).json(locations);
+  } catch (error) {
+    return res.status(400).send(error);
+  }
+};
+
+module.exports = {
+  deleteUser,
   rejectdeac,
-  deleteReq,
-  deleterequests,
+  getDeleteReqs,
+  sendDeactivationReq,
   locationrequests
 };

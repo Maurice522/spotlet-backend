@@ -1,69 +1,50 @@
-const fireAdmin = require("firebase-admin");
-const db = fireAdmin.firestore();
+// const fireAdmin = require("firebase-admin");
+// const db = fireAdmin.firestore();
+
+const Booking = require("../models/Booking");
+const Location = require("../models/Location");
+const User = require("../models/User");
 
 const getNoOfUsers = async (req, res) => {
-    let count = 0;
     try {
-        const snapshot = await db.collection("users").get();
-        snapshot.docs.map((doc) => {
-            count++;
-        });
-        res.status(200).send({ count });
+        const users = await User.find().sort({ "timestamp": -1 });;
+        res.status(200).send({ count: users.length });
     } catch (error) {
         res.status(400).send(error);
     }
 };
 
 const getNoOfLoctaions = async (req, res) => {
-    let count = 0;
     try {
-        const snapshot = await db.collection("location").where("verified", "==", "Approved").get();;
-        snapshot.docs.map((doc) => {
-            count++;
-        });
-        res.status(200).send({ count });
+        const locations = await Location.find({ verified: "Approved" }).sort({ "timestamp": -1 });;
+        res.status(200).send({ count: locations.length });
     } catch (error) {
         res.status(400).send(error);
     }
 };
 
 const getNoOfBookings = async (req, res) => {
-    let count = 0;
     try {
-        // const snapshot = await db.collection("bookings").get();
-        // snapshot.docs.map(async (doc) => {
-        const requests = await db.collection("bookings").doc("spot35127").collection("bookingrequests").get();
-        requests.docs.map(doc => {
-            count++;
-        })
-        // });
-        // res.status(200).send(snapshot.docs);
-        res.status(200).send({ count });
+        const bookings = await Booking.find().sort({ "timestamp": -1 });;
+        res.status(200).send({ count: bookings.length });
     } catch (error) {
         res.status(422).send(error);
     }
 };
 
 const getNoOfRequests = async (req, res) => {
-    let count = 0;
     try {
-        const snapshot = await db.collection("location").where("verified", "==", "Under Review").get();
-        snapshot.docs.map(doc => {
-            count++;
-        })
-        res.status(200).send({ count });
+        const locations = await Location.find({ verified: "Under Review" }).sort({ "timestamp": -1 });;
+        res.status(200).send({ count: locations.length });
     } catch (error) {
-        res.status(422).send(error);
+        res.status(400).send(error);
     }
 };
 
 const getAllLocations = async (req, res) => {
     try {
-        const snapshots = await db.collection("location").orderBy("timestamp", "desc").get();
-        const locations = snapshots.docs.map(doc => {
-            return { location_id: doc.id, ...doc.data() };
-        })
-        return res.json({ locations });
+        const locations = await Location.find().sort({ "timestamp": -1 });;
+        return res.json(locations);
     } catch (error) {
         return res.status(400).send(error);
     }
@@ -71,13 +52,19 @@ const getAllLocations = async (req, res) => {
 
 const sendMsgToAllUsers = async (req, res) => {
     try {
-        const { userlist, form } = req.body;
-        // console.log(form);
-        userlist.forEach(async (user) => {
-            const snapshot = await db.collection("users").doc(user.id).get();
-            const userData = snapshot.data();
-            // console.log(userData);
-            await db.collection("users").doc(user.id).update({ ...userData, notifications: [...userData.notifications, form], notificationFlag: true });
+        const usersList = await User.find().sort({ "timestamp": -1 });;
+
+        usersList.forEach(async (user) => {
+            await User.findByIdAndUpdate(user._id,
+                {
+                    $set: {
+                        ...user._doc,
+                        notifications: [...user.notifications, req.body],
+                        notificationFlag: true
+                    },
+                },
+                { new: true }
+            );
         });
         res.status(200).send("Message Sent");
     } catch (error) {

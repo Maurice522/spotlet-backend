@@ -1,15 +1,39 @@
-// class User {
-//   constructor(
-//     personalInfo,
-//     favourites = [],
-//     listedLocations = [],
-//     portfolio = []
-//   ) {
-//     this.personalInfo = personalInfo;
-//     this.favourites = favourites;
-//     this.listedLocations = listedLocations;
-//     this.portfolio = portfolio;
-//   }
-// }
+const mongoose = require("mongoose");
 
-// export default User;
+const UserSchema = new mongoose.Schema(
+    {
+        personalInfo: {
+            type: Object,
+            required: true,
+            default: {},
+        },
+        favourites: {
+            type: [String],
+            required: true,
+            default: [],
+        },
+        listedLocations: {
+            type: [Object],
+            required: true,
+            default: [],
+        },
+        portfolio: {
+            type: [Object],
+            required: true,
+            default: [],
+        },
+        notifications: {
+            type: [Object],
+            required: true,
+            default: [],
+        },
+        notificationFlag: {
+            type: Boolean,
+            required: true,
+            default: false,
+        },
+    },
+    { timestamps: true }
+);
+
+module.exports = mongoose.model("User", UserSchema);

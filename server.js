@@ -1,14 +1,24 @@
 const express = require("express");
-const app = express();
 const cors = require("cors");
-const fireAdmin = require("firebase-admin");
-const serviceAccount = require("./serviceKey.json");
+const mongoose = require('mongoose')
+const dotenv = require('dotenv')
 
-fireAdmin.initializeApp({
-  credential: fireAdmin.credential.cert(serviceAccount),
-});
-app.use(express.json());
+dotenv.config();
+const PORT = process.env.PORT || "7000";
+
+const app = express();
+
 app.use(cors());
+app.use(express.json());
+
+mongoose.set("strictQuery", false);
+mongoose.connect(process.env.MONGO_URL, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+})
+  .then(console.log('connected to mongodb'))
+  .catch((err) => console.log(err));
+
 app.use(require("./routes/userRoute"));
 app.use(require("./routes/locationRoute"));
 app.use(require("./routes/requestsRoute"));
@@ -19,9 +29,7 @@ app.use(require("./routes/blogRoute"));
 app.use(require("./routes/adminRoute"))
 app.use(require("./routes/dropdownRoute"))
 app.use(require("./routes/transactionRoute"))
-let db = fireAdmin.firestore();
 
-const PORT = process.env.PORT || "8000";
 
 var server = app.listen(PORT, () => {
   console.log("server is running on port ", PORT);

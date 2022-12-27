@@ -12,13 +12,14 @@ const {
   uploadPicController,
   updatePasswordController,
   resetPasswordController,
-  getUsersController, 
-  updateUserInfo
+  getAllUsersController, 
+  updateNotificationFlagController,
+  updateFavouritesController
 } = require("../controllers/user");
 
-const memoStorage = multer.memoryStorage();
+// const memoStorage = multer.memoryStorage();
 
-const upload = multer({ memoStorage });
+// const upload = multer({ memoStorage });
 
 //for registering users
 router.post("/signup", registerController);
@@ -33,7 +34,7 @@ router.post("/activation", activationController);
 router.get("/user/:id", getUserDataController);
 
 //get all users
-router.get("/users", getUsersController);
+router.get("/users", getAllUsersController);
 
 // for account updation
 router.post("/updateactivation", activationUpdateUserDataController);
@@ -44,16 +45,19 @@ router.put("/user/update/:id", updateUserDataController);
 //forgot password
 router.post("/forgot-password", forgotPasswordController);
 
-//update password
-router.put("/user/updatepassword/:id", updatePasswordController);
-
 //reset password
 router.put("/user/reset-password/:id", resetPasswordController);
 
-//upload pic
-router.post("/user/upload-pic", upload.single("pic"), uploadPicController);
+//update password
+router.put("/user/updatepassword/:id", updatePasswordController);
 
-//update user data
-router.post("/updateuser", updateUserInfo);
+//upload pic
+// router.post("/user/upload-pic", upload.single("pic"), uploadPicController);
+
+// update notification dot
+router.post("/notificationstatus", updateNotificationFlagController);
+
+// update fav
+router.post("/favourites", updateFavouritesController);
 
 module.exports = router;
