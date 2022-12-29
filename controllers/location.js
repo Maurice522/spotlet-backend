@@ -252,7 +252,7 @@ const approveLocation = async (req, res) => {
 
     const listedloc = user._doc.listedLocations;
     listedloc.map((loc) => {
-      if (req.params.id === loc.location_id) {
+      if (req.params.id === loc.location_id.toString()) {
         loc.verified = "Approved"
       }
     })

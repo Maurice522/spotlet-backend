@@ -77,6 +77,11 @@ const sendDeactivationReq = async (req, res) => {
   try {
     const user = await User.findOne({ _id: req.params.id });
 
+    const req = await DeactRequest.findOne({ user_id: req.params.id })
+    if (req) {
+      return res.status(403).json("request already sent");
+    }
+
     const newReq = new DeactRequest({
       user_id: req.params.id,
       CustomerName: user._doc.personalInfo.fullName,

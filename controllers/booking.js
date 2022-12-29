@@ -66,7 +66,7 @@ const locationBookController = async (req, res) => {
 
         const user = await User.findOne({ _id: req.body.user_id });
 
-        await User.findByIdAndUpdate(user_id,
+        await User.findByIdAndUpdate(req.body.user_id,
             {
                 $set: {
                     ...user._doc,

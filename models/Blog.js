@@ -8,9 +8,8 @@ const BlogSchema = new mongoose.Schema(
             default: ""
         },
         image: {
-            type: String,
-            required: true,
-            default: ""
+            type: Object,
+            default: {}
         },
         subheading: {
             type: String,
