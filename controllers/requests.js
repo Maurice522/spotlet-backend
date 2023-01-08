@@ -77,8 +77,8 @@ const sendDeactivationReq = async (req, res) => {
   try {
     const user = await User.findOne({ _id: req.params.id });
 
-    const req = await DeactRequest.findOne({ user_id: req.params.id })
-    if (req) {
+    const request = await DeactRequest.findOne({ user_id: req.params.id })
+    if (request) {
       return res.status(403).json("request already sent");
     }
 

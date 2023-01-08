@@ -107,25 +107,29 @@ const locationCreate = async (req, res) => {
         film_webseries_ad: {
           type: "Film",
           isPresent: film_webseries_ad.isPresent,
-          hourly_rate: film_webseries_ad.hourly_rate
+          hourly_rate: film_webseries_ad.hourly_rate,
+          attendees: film_webseries_ad.attendees
         },
         tv_series_other: {
           type: "TV",
           isPresent: tv_series_other.isPresent,
-          hourly_rate: tv_series_other.hourly_rate
+          hourly_rate: tv_series_other.hourly_rate,
+          attendees: tv_series_other.attendees
         },
         corporate: {
           type: "Corporate",
           isPresent: corporate.isPresent,
-          hourly_rate: corporate.hourly_rate
+          hourly_rate: corporate.hourly_rate,
+          attendees: corporate.attendees
         },
         individual: {
           type: "Individual",
           isPresent: individual.isPresent,
-          hourly_rate: individual.hourly_rate
+          hourly_rate: individual.hourly_rate,
+          attendees: individual.attendees
         },
       },
-      review_and_rating: {},
+      review_and_rating: [],
       verified: "Under Review"
     })
 
@@ -299,6 +303,78 @@ const approveLocation = async (req, res) => {
   }
 }
 
+const updateLocationController = async (req, res) => {
+  try {
+    const { newLocData, location_id } = req.body;
+
+    const location = await Location.findOne({ location_id: location_id });
+    if (!location)
+      return res.status(404).send("No location found...");
+
+    await Location.findByIdAndUpdate(location._id,
+      {
+        $set: {
+          ...location._doc,
+          amenities: newLocData.amenities,
+          bankDetails: newLocData.bankDetails,
+          bookedDates: newLocData.bookedDates,
+          contact_det: newLocData.contact_det,
+          do_and_dont: newLocData.do_and_dont,
+          features: newLocData.features,
+          gst: newLocData.gst,
+          imagesData: newLocData.imagesData,
+          pricing: newLocData.pricing,
+          property_address: newLocData.property_address,
+          property_desc: newLocData.property_desc,
+          rules: newLocData.rules,
+          timings: newLocData.timings,
+          review_and_rating: newLocData.review_and_rating,
+          verified: newLocData.verified,
+        },
+      },
+      { new: true }
+    );
+
+    const user = await User.findOne({ _id: location._doc.property_desc.user_id });
+
+    const listedloc = user._doc.listedLocations;
+    listedloc.map((loc) => {
+      if (location_id === loc.location_id.toString()) {
+        loc.amenities = newLocData.amenities;
+        loc.bankDetails = newLocData.bankDetails;
+        loc.bookedDates = newLocData.bookedDates;
+        loc.contact_det = newLocData.contact_det;
+        loc.do_and_dont = newLocData.do_and_dont;
+        loc.features = newLocData.features;
+        loc.gst = newLocData.gst;
+        loc.imagesData = newLocData.imagesData;
+        loc.pricing = newLocData.pricing;
+        loc.property_address = newLocData.property_address;
+        loc.property_desc = newLocData.property_desc;
+        loc.rules = newLocData.rules;
+        loc.timings = newLocData.timings;
+        loc.review_and_rating = newLocData.review_and_rating;
+        loc.verified = newLocData.verified;
+      }
+    })
+
+    await User.findByIdAndUpdate(location._doc.property_desc.user_id,
+      {
+        $set: {
+          ...user._doc,
+          listedLocations: listedloc,
+        },
+      },
+      { new: true }
+    );
+
+    return res.status(200).send("Location Updated");
+  } catch (error) {
+    console.log(error);
+    return res.status(400).send(error);
+  }
+}
+
 const uploadLocPicsController = async (req, res) => {
   try {
     const file = req.file;
@@ -378,7 +454,7 @@ const reviewRatingController = async (req, res) => {
       },
       { new: true }
     );
-    res.status(200).json({ message: "review and rating created" });
+    res.status(200).json({ message: "review and rating sent" });
   } catch (error) {
     res.status(400).send(error.message);
   }
@@ -397,6 +473,7 @@ module.exports = {
   approveLocation,
   getAllTempLoc,
   bookedDatesController,
+  updateLocationController,
   reviewRatingController,
   tempLocationGet
 };

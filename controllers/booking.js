@@ -31,13 +31,11 @@ const locationBookController = async (req, res) => {
     try {
         const newBooking = new Booking({
             discount: req.body.discount,
-            reqDate: req.body.reqDate,
+            reqDates: req.body.reqDate,
             processfee: req.body.processfee,
             final_amount: req.body.final_amount,
             event: req.body.event,
-            date: req.body.date,
-            time: req.body.time,
-            duration_in_hours: req.body.duration_in_hours,
+            bookedTimeDates: req.body.bookedTimeDates,
             attendies: req.body.attendies,
             activity: req.body.activity,
             user_id: req.body.user_id,
@@ -208,6 +206,51 @@ const deleteBookingReq = async (req, res) => {
     }
 }
 
+const addABookingDay = async (req, res) => {
+    try {
+        const { data } = req.body;
+
+        const booking = await Booking.findOne({ _id: req.params.bookingId });
+
+        if (!booking)
+            return res.status(404).send("No Booking found...");
+
+        await Booking.findByIdAndUpdate(req.params.bookingId,
+            {
+                $set: {
+                    ...booking._doc,
+                    bookedTimeDates: [...booking.bookedTimeDates, data],
+                    reqDates: [...booking.reqDates, data.bookedDate]
+                },
+            },
+            { new: true }
+        );
+        const user = await User.findOne({ _id: booking.user_id });
+
+        const portfolio = user._doc.portfolio;
+        portfolio.map((booking) => {
+            if (req.params.bookingId === booking._id.toString()) {
+                booking.bookedTimeDates = [...booking.bookedTimeDates, data];
+                booking.reqDates = [...booking.reqDates, data.bookedDate]
+            }
+        })
+
+        await User.findByIdAndUpdate(booking.user_id,
+            {
+                $set: {
+                    ...user._doc,
+                    portfolio: portfolio,
+                },
+            },
+            { new: true }
+        );
+
+        return res.status(200).send(`Booking day added`);
+    } catch (error) {
+        return res.status(400).send(error);
+    }
+}
+
 // Mobile OTP
 // const mobileOtpVerify = (req, res) => {
 //     const { phoneNum } = req.body;
@@ -232,5 +275,6 @@ module.exports = {
     getBookingDetail,
     updateBookingStatus,
     deleteBookingReq,
+    addABookingDay,
     // mobileOtpVerify,
 }

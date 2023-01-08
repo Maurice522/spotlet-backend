@@ -127,8 +127,9 @@ const activationController = async (req, res) => {
 
 const signInController = async (req, res) => {
   try {
-    const { email, password } = req.body;
-    if (!email || !password)
+    const { email, password, googleLogin } = req.body;
+
+    if (!googleLogin && (!email || !password))
       return res.status(400).json({ error: "Please add details!" });
 
     //find user
@@ -136,20 +137,25 @@ const signInController = async (req, res) => {
     if (!user)
       return res.status(404).json({ error: "User does not exsist!" });
 
-    const doMatch = await bcrypt.compare(password, user.personalInfo.password);
+    if (!googleLogin) {
+      const doMatch = await bcrypt.compare(password, user.personalInfo.password);
 
-    if (doMatch) {
+      if (doMatch) {
+        const token = jwt.sign({ _id: user._id }, JWT_SECRET, { expiresIn: "7d" });
+        console.log(token);
+        return res.status(200).json({ token: token });
+      } else
+        return res.status(401).json({ error: "Invalid Email or Password!" });
+    } else {
       const token = jwt.sign({ _id: user._id }, JWT_SECRET, { expiresIn: "7d" });
       console.log(token);
       return res.status(200).json({ token: token });
-    } else
-      return res.status(401).json({ error: "Invalid Email or Password!" });
+    }
 
   } catch (error) {
     return res.send(error);
   }
 };
-
 
 const getAllUsersController = async (req, res) => {
   try {
@@ -260,7 +266,7 @@ const forgotPasswordController = async (req, res) => {
       to: receivers,
       subject: "Password Reset",
       htmlContent: `  <p>You requested for password reset</p><br><br>
-    <h5>click in this <a href="https://gorecce-5a416.web.app/reset/${user._id.toString()}">link</a> to reset password</h5>`,
+    <h5>click in this <a href="https://spotlet.in/reset/${user._id.toString()}">link</a> to reset password</h5>`,
     };
 
     await tranEmailApi.sendTransacEmail(emailData);

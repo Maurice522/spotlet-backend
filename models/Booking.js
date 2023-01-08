@@ -2,8 +2,8 @@ const mongoose = require("mongoose");
 
 const BookingSchema = new mongoose.Schema(
     {
-        reqDate: {
-            type: String,
+        reqDates: {
+            type: [String],
             required: true,
         },
         event: {
@@ -11,21 +11,16 @@ const BookingSchema = new mongoose.Schema(
             required: true,
             default: ""
         },
-        date: {
+        attendies: {
             type: String,
             required: true,
             default: ""
         },
-        time: {
-            type: String,
+        bookedTimeDates: {
+            type: [Object],
             required: true,
-            default: "",
-        },
-        duration_in_hours: {
-            type: String,
-            required: true,
-            default: "",
-        },
+            default: []
+        },       
         activity: {
             type: String,
             required: true,

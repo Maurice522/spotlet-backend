@@ -13,6 +13,7 @@ const {
   delLocation,
   approveLocation,
   getAllTempLoc,
+  updateLocationController,
   bookedDatesController,
   reviewRatingController,
   tempLocationGet
@@ -52,8 +53,11 @@ router.put("/approveloc/:id", approveLocation);
 //upload GST documents
 // router.post("/uploadgst", upload.single("pic"), uploadGSTDoc);
 
-//delet file from storage
+//delete file from storage
 // router.delete("/deletefile", deleteFile);
+
+//update location
+router.post("/updatelocation/", updateLocationController);
 
 //update booked dates of location
 router.post("/bookeddates/", bookedDatesController);
