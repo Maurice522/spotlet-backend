@@ -73,7 +73,7 @@ const tempLocation = async (req, res) => {
 
 const tempLocationGet = async (req, res) => {
   try {
-    const templocation = await TempLocation.findOne({ location_id: req.params.id });
+    const templocation = await TempLocation.findOne({ _id: req.params.id });
     return res.status(200).send(templocation);
   } catch (error) {
     return res.status(400).send(error);
@@ -409,7 +409,8 @@ const uploadGSTDoc = async (req, res) => {
     const params = {
       Bucket: BUCKET,
       Key: `location/gst/${file.originalname}`,
-      Body: file.buffer
+      Body: file.buffer,
+      ContentDisposition: 'inline'
     };
 
     // Uploading files to the bucket
