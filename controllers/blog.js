@@ -1,5 +1,7 @@
 "use strict";
 
+const { s3 } = require("../awsS3");
+const { BUCKET } = require("../config/key");
 const Blog = require("../models/Blog");
 
 // const fireAdmin = require("firebase-admin");
@@ -36,23 +38,34 @@ const getBlogs = async (req, res) => {
     }
 }
 
-// const uploadBlogPics = async (req, res) => {
-//     try {
-//         const file = req.file;
-//         const imageRef = ref(storage, `blogs/${file.name}`);
-//         const metatype = { contentType: file.mimetype, name: file.name };
-//         const snapshot = await uploadBytes(imageRef, file.buffer, metatype);
-//         const url = await getDownloadURL(imageRef);
-//         return res.status(200).json({ message: "uploaded...", url: url, fileRef: imageRef });
-//     } catch (error) {
-//         console.log(error);
-//         return res.status(400).send(error);
-//     }
-// };
+const uploadBlogPics = async (req, res) => {
+    const file = req.file;
+    try {
+        const params = {
+            Bucket: BUCKET,
+            Key: `blogs/${file.originalname}`,
+            Body: file.buffer
+        };
+
+        // Uploading files to the bucket
+        s3.upload(params, function (err, data) {
+            // console.log(data, err);
+            if (err) {
+                throw err;
+            }
+            console.log(`File uploaded successfully. ${data.Location}`);
+            return res.status(200).json({ message: "uploaded...", url: data.Location, fileRef: file.buffer });
+        });
+
+    } catch (error) {
+        console.log(error);
+        return res.status(400).send(error);
+    }
+};
 
 
 module.exports = {
     createBlog,
     getBlogs,
-    // uploadBlogPics
+    uploadBlogPics
 };

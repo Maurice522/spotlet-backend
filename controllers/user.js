@@ -6,11 +6,13 @@
 // const storage = require("../firebase");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
+const { s3 } = require("../awsS3");
 
 const {
   JWT_SECRET,
   EMAIL_FROM,
   SIB_API,
+  BUCKET
 } = require("../config/key");
 const Sib = require('sib-api-v3-sdk');
 const User = require("../models/User");
@@ -238,13 +240,24 @@ const updateUserDataController = async (req, res) => {
 };
 
 const uploadPicController = async (req, res) => {
+  const file = req.file;
   try {
-    const file = req.file;
-    const imageRef = ref(storage, file.originalname);
-    const metatype = { contentType: file.mimetype, name: file.originalname };
-    const snapshot = await uploadBytes(imageRef, file.buffer, metatype);
-    const url = await getDownloadURL(imageRef);
-    return res.status(200).json({ message: "uploaded...", url: url });
+    const params = {
+      Bucket: BUCKET,
+      Key: `users/${file.originalname}`,
+      Body: file.buffer
+    };
+
+    // Uploading files to the bucket
+    s3.upload(params, function (err, data) {
+      // console.log(data, err);
+      if (err) {
+        throw err;
+      }
+      console.log(`File uploaded successfully. ${data.Location}`);
+      return res.status(200).json({ message: "uploaded...", url: data.Location, fileRef: file.buffer });
+    });
+
   } catch (error) {
     return res.status(422).send(error);
   }
@@ -386,6 +399,6 @@ module.exports = {
   getAllUsersController,
   resetPasswordController,
   updateNotificationFlagController,
-  updateFavouritesController
-  // uploadPicController,
+  updateFavouritesController,
+  uploadPicController,
 };

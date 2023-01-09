@@ -4,10 +4,12 @@
 // const db = fireAdmin.firestore();
 // const { ref, uploadBytes, getDownloadURL, deleteObject } = require("firebase/storage");
 // const storage = require("../firebase");
+const { s3 } = require('../awsS3');
 
 const {
   EMAIL_FROM,
   SIB_API,
+  BUCKET,
 } = require("../config/key");
 const Sib = require('sib-api-v3-sdk');
 const Location = require("../models/Location");
@@ -376,26 +378,50 @@ const updateLocationController = async (req, res) => {
 }
 
 const uploadLocPicsController = async (req, res) => {
+  const file = req.file;
+
   try {
-    const file = req.file;
-    const imageRef = ref(storage, `locations/${file.originalname}`);
-    const metatype = { contentType: file.mimetype, name: file.originalname };
-    const snapshot = await uploadBytes(imageRef, file.buffer, metatype);
-    const url = await getDownloadURL(imageRef);
-    return res.status(200).json({ message: "uploaded...", url: url, fileRef: imageRef });
+    const params = {
+      Bucket: BUCKET,
+      Key: `location/images/${file.originalname}`,
+      Body: file.buffer
+    };
+
+    // Uploading files to the bucket
+    s3.upload(params, function (err, data) {
+      // console.log(data, err);
+      if (err) {
+        throw err;
+      }
+      console.log(`File uploaded successfully. ${data.Location}`);
+      return res.status(200).json({ message: "uploaded...", url: data.Location });
+    });
+
   } catch (error) {
     return res.status(422).send(error);
   }
 };
 
 const uploadGSTDoc = async (req, res) => {
+  const file = req.file;
+
   try {
-    const file = req.file;
-    const imageRef = ref(storage, `gst/${file.originalname}`);
-    const metatype = { contentType: file.mimetype, name: file.originalname };
-    const snapshot = await uploadBytes(imageRef, file.buffer, metatype);
-    const url = await getDownloadURL(imageRef);
-    return res.status(200).json({ message: "uploaded...", url: url, fileRef: imageRef });
+    const params = {
+      Bucket: BUCKET,
+      Key: `location/gst/${file.originalname}`,
+      Body: file.buffer
+    };
+
+    // Uploading files to the bucket
+    s3.upload(params, function (err, data) {
+      // console.log(data, err);
+      if (err) {
+        throw err;
+      }
+      console.log(`File uploaded successfully. ${data.Location}`);
+      return res.status(200).json({ message: "uploaded...", url: data.Location });
+    });
+
   } catch (error) {
     return res.status(422).send(error);
   }
@@ -403,15 +429,34 @@ const uploadGSTDoc = async (req, res) => {
 
 const deleteFile = async (req, res) => {
   try {
-    const { image, fileRef } = req.body;
-    const delref = ref(storage, fileRef._location.path_)
-    const response = await deleteObject(delref);
-    //  console.log(response);
-    return res.status(200).send("deleted");
-    ///  deleteObject()
+    const { image, file, fileRef } = req.body;
 
-    //console.log(req.body);
+    let params;
+    if (image) {
+      params = {
+        Bucket: BUCKET,
+        Key: image.split('/')[3] + "/" + image.split('/')[4] + "/" + image.split('/')[5],
+      };
+    }
+    if (file) {
+      params = {
+        Bucket: BUCKET,
+        Key: file.split('/')[3] + "/" + file.split('/')[4] + "/" + file.split('/')[5],
+      };
+    }
+
+    // Delete files to the bucket
+    s3.deleteObject(params, function (err, data) {
+      // console.log(data, err);
+      if (err) {
+        throw err;
+      }
+      console.log(`File deleted successfully.`);
+      return res.status(200).json({ message: "deleted..." });
+    });
+
   } catch (error) {
+    console.log(error);
     return res.status(422).send(error);
   }
 }
@@ -467,9 +512,9 @@ module.exports = {
   getLocation,
   getAllApprovedLocations,
   tempLocation,
-  // uploadLocPicsController,
-  // uploadGSTDoc,
-  // deleteFile,
+  uploadLocPicsController,
+  uploadGSTDoc,
+  deleteFile,
   approveLocation,
   getAllTempLoc,
   bookedDatesController,

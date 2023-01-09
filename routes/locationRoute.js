@@ -19,9 +19,9 @@ const {
   tempLocationGet
 } = require("../controllers/location");
 
-// const memoStorage = multer.memoryStorage();
+const memoStorage = multer.memoryStorage();
 
-// const upload = multer({ memoStorage });
+const upload = multer({ storage: memoStorage });
 
 //Create a Temporary Location
 router.post("/templocation", tempLocation);
@@ -48,13 +48,13 @@ router.delete("/dellocation/:id", delLocation);
 router.put("/approveloc/:id", approveLocation);
 
 //upload locations pic
-// router.post("/uploadlocpic", upload.single("pic"), uploadLocPicsController);
+router.post("/uploadlocpic", upload.single("pic"), uploadLocPicsController);
 
 //upload GST documents
-// router.post("/uploadgst", upload.single("pic"), uploadGSTDoc);
+router.post("/uploadgst", upload.single("pic"), uploadGSTDoc);
 
 //delete file from storage
-// router.delete("/deletefile", deleteFile);
+router.delete("/deletefile", deleteFile);
 
 //update location
 router.post("/updatelocation/", updateLocationController);

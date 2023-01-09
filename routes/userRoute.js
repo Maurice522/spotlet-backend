@@ -17,9 +17,9 @@ const {
   updateFavouritesController
 } = require("../controllers/user");
 
-// const memoStorage = multer.memoryStorage();
+const memoStorage = multer.memoryStorage();
 
-// const upload = multer({ memoStorage });
+const upload = multer({ memoStorage });
 
 //for registering users
 router.post("/signup", registerController);
@@ -52,7 +52,7 @@ router.put("/user/reset-password/:id", resetPasswordController);
 router.put("/user/updatepassword/:id", updatePasswordController);
 
 //upload pic
-// router.post("/user/upload-pic", upload.single("pic"), uploadPicController);
+router.post("/user/upload-pic", upload.single("pic"), uploadPicController);
 
 // update notification dot
 router.post("/notificationstatus", updateNotificationFlagController);
