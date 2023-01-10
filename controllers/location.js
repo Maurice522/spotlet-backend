@@ -410,7 +410,8 @@ const uploadGSTDoc = async (req, res) => {
       Bucket: BUCKET,
       Key: `location/gst/${file.originalname}`,
       Body: file.buffer,
-      ContentDisposition: 'inline'
+      "ContentType": 'application/pdf',
+      "ContentDisposition": 'inline',
     };
 
     // Uploading files to the bucket
