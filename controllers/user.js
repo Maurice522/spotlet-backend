@@ -81,7 +81,10 @@ const registerController = async (req, res) => {
 
     await tranEmailApi.sendTransacEmail(emailData);
 
-    res.status(200).send("User has been created!");
+    const token = jwt.sign({ _id: createdUser._id }, JWT_SECRET, { expiresIn: "7d" });
+    console.log(token);
+
+    return res.status(200).json(token);
   } catch (error) {
     return res.status(400).send(error);
   }
