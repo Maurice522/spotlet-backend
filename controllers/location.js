@@ -185,7 +185,7 @@ const locationCreate = async (req, res) => {
 
 const getAllApprovedLocations = async (req, res) => {
   try {
-    const locations = await Location.find().sort({ "timestamp": -1 });;
+    const locations = await Location.find({ verified: "Approved" }).sort({ "timestamp": -1 });;
     return res.status(200).json(locations);
   } catch (error) {
     return res.status(400).send(error);
