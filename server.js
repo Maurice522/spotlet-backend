@@ -24,14 +24,6 @@ mongoose.connect(process.env.MONGO_URL, {
   .then(console.log('connected to mongodb'))
   .catch((err) => console.log(err));
 
-app.use((req, res) => {
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.header(
-    "Access-Control-Allow-Headers",
-    "Origin, X-Requested-With, Content-Type, Accept"
-  );
-});
-
 app.use(require("./routes/userRoute"));
 app.use(require("./routes/locationRoute"));
 app.use(require("./routes/requestsRoute"));
