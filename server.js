@@ -26,10 +26,6 @@ mongoose.connect(process.env.MONGO_URL, {
 
 app.use((req, res) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
-  res.header(
-    "Access-Control-Allow-Headers",
-    "Origin, X-Requested-With, Content-Type, Accept"
-  );
 });
 
 app.use(require("./routes/userRoute"));
