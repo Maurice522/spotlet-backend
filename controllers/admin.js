@@ -51,8 +51,8 @@ const getNoOfRequests = async (req, res) => {
 
 const getAllLocations = async (req, res) => {
     try {
-        const locations = await Location.find().sort({ "timestamp": -1 });;
-        return res.json(locations);
+        const locations = await Location.find().sort({ "timestamp": -1 });
+        return res.status(200).json(locations);
     } catch (error) {
         return res.status(400).send(error);
     }
