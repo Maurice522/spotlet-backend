@@ -138,6 +138,7 @@ at +91-98856 41122 or write to us at support@spotlet.in.</p>
 };
 
 const signInController = async (req, res) => {
+  console.log("reached");
   try {
     const { email, password, googleLogin } = req.body;
 

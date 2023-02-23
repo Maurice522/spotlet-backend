@@ -164,9 +164,19 @@ const updateBookingStatus = async (req, res) => {
             <h2>Location Id - ${locationId}</h2>
             <h2>Booking Id - ${bookingId}</h2>
             <p>Your status of booking a location is ${status}</p>
-            ${status === "Approved" ? `<p>Please use this link to complete your payment - <b>${link}</b> </p>` : ""}
               <hr />`,
         };
+        // const emailData = {
+        //     sender,
+        //     to: receivers,
+        //     subject: "Location Booking Status",
+        //     htmlContent: `
+        //     <h2>Location Id - ${locationId}</h2>
+        //     <h2>Booking Id - ${bookingId}</h2>
+        //     <p>Your status of booking a location is ${status}</p>
+        //     ${status === "Approved" ? `<p>Please use this link to complete your payment - <b>${link}</b> </p>` : ""}
+        //       <hr />`,
+        // };
         await tranEmailApi.sendTransacEmail(emailData);
 
         return res.status(200).send(`Booking is  ${status}`);

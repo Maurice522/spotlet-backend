@@ -67,7 +67,7 @@ const sendMsgToAllUsers = async (req, res) => {
                 {
                     $set: {
                         ...user._doc,
-                        notifications: [...user.notifications, req.body],
+                        notifications: [...user.notifications, req.body.form],
                         notificationFlag: true
                     },
                 },
@@ -81,6 +81,7 @@ const sendMsgToAllUsers = async (req, res) => {
 }
 
 const signInAdmin = async (req, res) => {
+    console.log("Reached")
     try {
         const { email, password } = req.body;
         if (!email || !password)
