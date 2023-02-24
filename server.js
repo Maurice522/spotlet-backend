@@ -60,7 +60,8 @@ const getUser = (userId) => {
   return users.find((user) => user.userId === userId);
 };
 
-io.on("connection", (socket) => {
+/**
+ * io.on("connection", (socket) => {
   //when connect
   // console.log("a user connected");
   //take userId and socketId from user
@@ -82,5 +83,20 @@ io.on("connection", (socket) => {
     // console.log("a user disconnected");
     removeUser(socket.id);
     io.emit("getUsers", users);
+  });
+});
+/** */
+
+io.on("connection", (socket) => {
+  console.log(`User Connected: ${socket.id}`);
+
+  socket.on("join_room", (data) => {
+    socket.join(data);
+    console.log("data",data)
+  });
+
+  socket.on("sendMessage", (data) => {
+    socket.to(data.room).emit("receive_message", data);
+    console.log("rec data",data)
   });
 });
