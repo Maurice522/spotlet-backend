@@ -92,11 +92,11 @@ io.on("connection", (socket) => {
 
   socket.on("join_room", (data) => {
     socket.join(data);
-    console.log("data",data)
+    // console.log("data",data)
   });
 
   socket.on("sendMessage", (data) => {
     socket.to(data.room).emit("receive_message", data);
-    console.log("rec data",data)
+    // console.log("rec data",data)
   });
 });
